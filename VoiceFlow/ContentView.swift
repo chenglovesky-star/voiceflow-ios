@@ -3,6 +3,7 @@ import SwiftData
 
 struct ContentView: View {
     @State private var service = RecordingService()
+    @State private var settings = AppSettings.shared
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
 
@@ -22,6 +23,18 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("VoiceFlow")
+            .toolbar {
+                if !service.isRecording {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            SettingsView(settings: settings)
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .accessibilityLabel("Settings")
+                    }
+                }
+            }
             .alert("Cannot start", isPresented: errorBinding) {
                 Button("OK") { startError = nil }
             } message: {
