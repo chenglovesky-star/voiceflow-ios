@@ -11,7 +11,7 @@ struct ContentView: View {
     @Query(sort: \RecordingEntity.createdAt, order: .reverse)
     private var entities: [RecordingEntity]
 
-    private let transcriptionService: any TranscriptionService = OnDeviceTranscriptionService()
+    private let transcriptionService: any TranscriptionService = TranscriptionServiceFactory.make()
 
     var body: some View {
         NavigationStack {
