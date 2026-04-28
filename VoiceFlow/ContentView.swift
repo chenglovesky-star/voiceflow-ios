@@ -3,15 +3,17 @@ import SwiftUI
 struct ContentView: View {
     @State private var service = RecordingService()
     @State private var recordings: [Recording] = []
+    @State private var transcripts: [UUID: Transcript] = [:]
+    @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
+
+    private let transcriptionService: any TranscriptionService = OnDeviceTranscriptionService()
 
     var body: some View {
         NavigationStack {
             Group {
                 if service.isRecording {
-                    RecordingView(service: service) { recording in
-                        recordings.insert(recording, at: 0)
-                    }
+                    RecordingView(service: service, onStop: handleStop)
                 } else {
                     home
                 }
@@ -44,17 +46,36 @@ struct ContentView: View {
             .frame(maxHeight: .infinity)
         } else {
             List(recordings) { recording in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(recording.displayName)
-                        .font(.body)
-                    Text(formatDuration(recording.duration))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 4)
+                row(for: recording)
             }
             .listStyle(.plain)
         }
+    }
+
+    private func row(for recording: Recording) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(recording.displayName)
+                .font(.body)
+            HStack(spacing: 8) {
+                Text(formatDuration(recording.duration))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if transcribingIds.contains(recording.id) {
+                    HStack(spacing: 4) {
+                        ProgressView().scaleEffect(0.7)
+                        Text("Transcribing…").font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            if let t = transcripts[recording.id], !t.fullText.isEmpty {
+                Text(t.fullText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 4)
     }
 
     private var startButton: some View {
@@ -85,6 +106,25 @@ struct ContentView: View {
             try await service.start()
         } catch {
             startError = error.localizedDescription
+        }
+    }
+
+    private func handleStop(_ recording: Recording) {
+        recordings.insert(recording, at: 0)
+        transcribingIds.insert(recording.id)
+        let svc = transcriptionService
+        Task {
+            do {
+                let transcript = try await svc.transcribe(
+                    audioURL: recording.url,
+                    recordingId: recording.id,
+                    locale: .current
+                )
+                transcripts[recording.id] = transcript
+            } catch {
+                // Phase 4 will surface errors in detail view; row falls back to no preview
+            }
+            transcribingIds.remove(recording.id)
         }
     }
 
