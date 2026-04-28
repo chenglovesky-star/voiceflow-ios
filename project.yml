@@ -1,0 +1,82 @@
+name: VoiceFlow
+options:
+  bundleIdPrefix: com.lei
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: "7337LF5P35"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+
+targets:
+  VoiceFlow:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: VoiceFlow
+    info:
+      path: VoiceFlow/Info.plist
+      properties:
+        CFBundleDisplayName: VoiceFlow
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSMicrophoneUsageDescription: VoiceFlow records audio so it can transcribe what you said. Audio never leaves your device.
+        NSSpeechRecognitionUsageDescription: VoiceFlow transcribes your recordings on-device using Apple's speech recognition. Nothing is uploaded.
+        UIBackgroundModes:
+          - audio
+        ITSAppUsesNonExemptEncryption: false
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        PRODUCT_BUNDLE_IDENTIFIER: com.lei.voiceflow
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+        DEVELOPMENT_ASSET_PATHS: "\"VoiceFlow/Preview Content\""
+        CODE_SIGN_STYLE: Automatic
+
+  VoiceFlowTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: VoiceFlowTests
+    dependencies:
+      - target: VoiceFlow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lei.voiceflow.tests
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  VoiceFlow:
+    build:
+      targets:
+        VoiceFlow: all
+        VoiceFlowTests: [test]
+    test:
+      targets:
+        - VoiceFlowTests
+      gatherCoverageData: true
+    run:
+      config: Debug
+    archive:
+      config: Release
