@@ -10,8 +10,10 @@ struct RecordingDetailView: View {
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
     @State private var isExporting = false
+    @State private var aiToast: String?
 
     private let exportService = ExportService()
+    private let aiShareService = AIShareService()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +23,11 @@ struct RecordingDetailView: View {
             Divider()
 
             transcriptSection
+
+            if hasTranscript {
+                Divider()
+                sendToAICTA
+            }
         }
         .navigationTitle(entity.displayName)
         .navigationBarTitleDisplayMode(.inline)
@@ -36,6 +43,42 @@ struct RecordingDetailView: View {
             Button("OK") { exportError = nil }
         } message: {
             Text(exportError ?? "")
+        }
+        .alert("Sent", isPresented: aiToastBinding) {
+            Button("OK") { aiToast = nil }
+        } message: {
+            Text(aiToast ?? "")
+        }
+    }
+
+    private var hasTranscript: Bool {
+        if let t = entity.transcript { return !t.segments.isEmpty }
+        return false
+    }
+
+    private var sendToAICTA: some View {
+        Menu {
+            ForEach(AITarget.allCases, id: \.self) { target in
+                Button {
+                    Task { await sendToAI(target) }
+                } label: {
+                    Label(target.displayName, systemImage: target.systemImage)
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                Text("Send to AI")
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color.purple)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .padding()
         }
     }
 
@@ -121,5 +164,27 @@ struct RecordingDetailView: View {
             get: { exportError != nil },
             set: { if !$0 { exportError = nil } }
         )
+    }
+
+    private var aiToastBinding: Binding<Bool> {
+        Binding(
+            get: { aiToast != nil },
+            set: { if !$0 { aiToast = nil } }
+        )
+    }
+
+    private func sendToAI(_ target: AITarget) async {
+        let segments = entity.transcript?.segments ?? []
+        guard !segments.isEmpty else {
+            exportError = "No transcript yet to send."
+            return
+        }
+        let text = segments.map(\.text).joined(separator: " ")
+        let result = await aiShareService.send(text, to: target)
+        if result.installed {
+            aiToast = "Transcript copied. Opening \(target.displayName)…"
+        } else {
+            aiToast = "Transcript copied. \(target.displayName) is not installed; opening web."
+        }
     }
 }
