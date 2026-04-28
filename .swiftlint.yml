@@ -1,0 +1,42 @@
+included:
+  - VoiceFlow
+  - VoiceFlowTests
+
+excluded:
+  - VoiceFlow.xcodeproj
+  - .planning
+  - .seed
+
+disabled_rules:
+  - trailing_whitespace
+  - line_length
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - sorted_imports
+  - unused_import
+
+identifier_name:
+  min_length: 1
+  excluded:
+    - id
+    - i
+    - f
+    - r
+    - p
+    - e
+    - t
+    - h
+    - m
+    - s
+    - ms
+
+type_name:
+  min_length: 3
+
+function_body_length:
+  warning: 80
+  error: 200
