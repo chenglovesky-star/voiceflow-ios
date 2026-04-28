@@ -6,6 +6,12 @@ struct RecordingDetailView: View {
     var isTranscribing: Bool
 
     @Environment(\.modelContext) private var modelContext
+    @State private var shareItems: [Any] = []
+    @State private var isShareSheetPresented = false
+    @State private var exportError: String?
+    @State private var isExporting = false
+
+    private let exportService = ExportService()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,13 +26,41 @@ struct RecordingDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button(role: .destructive, action: delete) {
-                        Label("Delete", systemImage: "trash")
+                menu
+            }
+        }
+        .sheet(isPresented: $isShareSheetPresented) {
+            ShareSheet(items: shareItems)
+        }
+        .alert("Export failed", isPresented: errorBinding) {
+            Button("OK") { exportError = nil }
+        } message: {
+            Text(exportError ?? "")
+        }
+    }
+
+    @ViewBuilder
+    private var menu: some View {
+        Menu {
+            Section("Export") {
+                ForEach(ExportFormat.allCases, id: \.self) { fmt in
+                    Button {
+                        Task { await export(format: fmt) }
+                    } label: {
+                        Label(fmt.rawValue, systemImage: fmt.systemImage)
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
+                    .disabled(isExporting)
                 }
+            }
+            Divider()
+            Button(role: .destructive, action: delete) {
+                Label("Delete", systemImage: "trash")
+            }
+        } label: {
+            if isExporting {
+                ProgressView()
+            } else {
+                Image(systemName: "ellipsis.circle")
             }
         }
     }
@@ -66,5 +100,26 @@ struct RecordingDetailView: View {
         try? FileManager.default.removeItem(at: entity.fileURL)
         modelContext.delete(entity)
         try? modelContext.save()
+    }
+
+    private func export(format: ExportFormat) async {
+        guard !isExporting else { return }
+        isExporting = true
+        let ctx = ExportContext.from(entity)
+        do {
+            let url = try await exportService.export(ctx, format: format)
+            shareItems = [url]
+            isShareSheetPresented = true
+        } catch {
+            exportError = error.localizedDescription
+        }
+        isExporting = false
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(
+            get: { exportError != nil },
+            set: { if !$0 { exportError = nil } }
+        )
     }
 }
