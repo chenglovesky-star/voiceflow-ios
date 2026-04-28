@@ -1,0 +1,18 @@
+appId: com.lei.voiceflow
+---
+- launchApp
+- assertVisible: "VoiceFlow"
+- assertVisible: "No recordings"
+- assertVisible: "Tap the mic to start your first recording."
+- assertVisible: "Settings"
+- takeScreenshot: 02-home
+- tapOn: "Settings"
+- assertVisible: "Sample rate"
+- assertVisible: "Bit rate"
+- assertVisible: "Sync across my devices"
+- assertVisible: "Audio and transcripts never leave your device."
+- assertVisible: "Version"
+- takeScreenshot: 03-settings
+- back
+- assertVisible: "VoiceFlow"
+- takeScreenshot: 04-back-to-home
