@@ -1,11 +1,14 @@
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     @State private var service = RecordingService()
-    @State private var recordings: [Recording] = []
-    @State private var transcripts: [UUID: Transcript] = [:]
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
+
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \RecordingEntity.createdAt, order: .reverse)
+    private var entities: [RecordingEntity]
 
     private let transcriptionService: any TranscriptionService = OnDeviceTranscriptionService()
 
@@ -37,7 +40,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private var recordingsList: some View {
-        if recordings.isEmpty {
+        if entities.isEmpty {
             ContentUnavailableView(
                 "No recordings",
                 systemImage: "waveform",
@@ -45,22 +48,32 @@ struct ContentView: View {
             )
             .frame(maxHeight: .infinity)
         } else {
-            List(recordings) { recording in
-                row(for: recording)
+            List {
+                ForEach(entities) { entity in
+                    NavigationLink {
+                        RecordingDetailView(
+                            entity: entity,
+                            isTranscribing: transcribingIds.contains(entity.id)
+                        )
+                    } label: {
+                        row(for: entity)
+                    }
+                }
+                .onDelete(perform: deleteEntities)
             }
             .listStyle(.plain)
         }
     }
 
-    private func row(for recording: Recording) -> some View {
+    private func row(for entity: RecordingEntity) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(recording.displayName)
+            Text(entity.displayName)
                 .font(.body)
             HStack(spacing: 8) {
-                Text(formatDuration(recording.duration))
+                Text(formatDuration(entity.duration))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if transcribingIds.contains(recording.id) {
+                if transcribingIds.contains(entity.id) {
                     HStack(spacing: 4) {
                         ProgressView().scaleEffect(0.7)
                         Text("Transcribing…").font(.caption)
@@ -68,7 +81,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                 }
             }
-            if let t = transcripts[recording.id], !t.fullText.isEmpty {
+            if let t = entity.transcript, !t.fullText.isEmpty {
                 Text(t.fullText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -110,22 +123,42 @@ struct ContentView: View {
     }
 
     private func handleStop(_ recording: Recording) {
-        recordings.insert(recording, at: 0)
+        let entity = RecordingEntity.from(recording)
+        modelContext.insert(entity)
+        do { try modelContext.save() } catch { }
+
         transcribingIds.insert(recording.id)
         let svc = transcriptionService
+        let ctx = modelContext
+        let recordingId = recording.id
+
         Task {
             do {
                 let transcript = try await svc.transcribe(
                     audioURL: recording.url,
-                    recordingId: recording.id,
+                    recordingId: recordingId,
                     locale: .current
                 )
-                transcripts[recording.id] = transcript
+                if let target = entities.first(where: { $0.id == recordingId }) {
+                    let te = TranscriptEntity.from(transcript)
+                    ctx.insert(te)
+                    target.transcript = te
+                    try? ctx.save()
+                }
             } catch {
-                // Phase 4 will surface errors in detail view; row falls back to no preview
+                // Phase 9 will surface in detail view; row falls back to no preview
             }
-            transcribingIds.remove(recording.id)
+            transcribingIds.remove(recordingId)
         }
+    }
+
+    private func deleteEntities(at offsets: IndexSet) {
+        for i in offsets {
+            let entity = entities[i]
+            try? FileManager.default.removeItem(at: entity.fileURL)
+            modelContext.delete(entity)
+        }
+        try? modelContext.save()
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {
@@ -138,4 +171,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .modelContainer(for: [RecordingEntity.self, TranscriptEntity.self], inMemory: true)
 }

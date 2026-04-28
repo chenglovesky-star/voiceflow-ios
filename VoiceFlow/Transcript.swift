@@ -1,6 +1,6 @@
 import Foundation
 
-struct TranscriptSegment: Identifiable, Hashable, Sendable {
+struct TranscriptSegment: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     let text: String
     let start: TimeInterval

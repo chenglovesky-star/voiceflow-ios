@@ -38,7 +38,7 @@ final class RecordingService: NSObject {
     private var startedAt: Date?
     private let levelsCapacity = 60
 
-    static let recordingsDirectoryName = "recordings"
+    nonisolated static let recordingsDirectoryName = "recordings"
 
     func requestPermission() async -> Bool {
         if #available(iOS 17.0, *) {
@@ -143,7 +143,7 @@ final class RecordingService: NSObject {
         currentLevel = 0
     }
 
-    static func makeRecordingURL() -> URL {
+    nonisolated static func makeRecordingURL() -> URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let dir = docs.appendingPathComponent(recordingsDirectoryName, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
