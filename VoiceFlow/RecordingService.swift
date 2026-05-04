@@ -298,6 +298,7 @@ extension RecordingService: AVAudioRecorderDelegate {
 
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         Task { @MainActor [weak self] in
+            self?.interruptedError = error?.localizedDescription ?? "录音编码错误"
             self?.cleanup()
         }
     }
