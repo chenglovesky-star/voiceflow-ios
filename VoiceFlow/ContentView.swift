@@ -154,13 +154,14 @@ struct ContentView: View {
         let svc = transcriptionService
         let ctx = context
         let recordingId = recording.id
+        let locale = settings.transcriptionLocale
 
         Task {
             do {
                 let transcript = try await svc.transcribe(
                     audioURL: recording.url,
                     recordingId: recordingId,
-                    locale: .current
+                    locale: locale
                 )
                 if let target = entities.first(where: { $0.id == recordingId }) {
                     let te = TranscriptEntity.from(transcript, context: ctx)
