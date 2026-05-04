@@ -31,6 +31,7 @@ final class RecordingService: NSObject, ObservableObject {
     @Published private(set) var currentLevel: Float = 0
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var recentLevels: [Float] = []
+    @Published var interruptedError: String?
 
     /// Duration in seconds after which a new segment is automatically created (default: 10 minutes)
     var segmentDuration: TimeInterval = 600
@@ -91,11 +92,12 @@ final class RecordingService: NSObject, ObservableObject {
     /// Starts a new recording segment and returns the Recording object
     private func startNewSegment() throws -> Recording {
         let url = Self.makeRecordingURL(sessionId: currentSessionId, segment: currentSegmentIndex)
+        let appSettings = AppSettings.shared
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44_100,
+            AVSampleRateKey: appSettings.defaultSampleRate,
             AVNumberOfChannelsKey: 1,
-            AVEncoderBitRateKey: 64_000,
+            AVEncoderBitRateKey: appSettings.defaultBitRate,
             AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
         ]
 
@@ -153,9 +155,12 @@ final class RecordingService: NSObject, ObservableObject {
 
         // Start new segment
         currentSegmentIndex += 1
-        let newSegment = try? startNewSegment()
-        if let newSegment = newSegment {
+        do {
+            let newSegment = try startNewSegment()
             segments.append(newSegment)
+        } catch {
+            interruptedError = error.localizedDescription
+            cleanup()
         }
     }
 
@@ -261,6 +266,7 @@ final class RecordingService: NSObject, ObservableObject {
         currentSessionId = nil
         currentSegmentIndex = 0
         segments = []
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     nonisolated static func makeRecordingURL(sessionId: UUID?, segment: Int) -> URL {
@@ -283,7 +289,11 @@ final class RecordingService: NSObject, ObservableObject {
 
 extension RecordingService: AVAudioRecorderDelegate {
     nonisolated func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        // explicit stop() handles state; this fires on background interruption too
+        guard !flag else { return }
+        Task { @MainActor [weak self] in
+            self?.interruptedError = "录音因系统中断而停止"
+            self?.cleanup()
+        }
     }
 
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
