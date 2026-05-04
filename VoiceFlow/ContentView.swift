@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var service = RecordingService()
     @ObservedObject private var settings = AppSettings.shared
     @State private var transcribingIds: Set<UUID> = []
+    @State private var transcriptionTasks: [UUID: Task<Void, Never>] = [:]
     @State private var startError: String?
     @State private var deleteError: String?
     @State private var transcriptionErrors: [UUID: String] = [:]
@@ -43,12 +44,31 @@ struct ContentView: View {
                     }
                 }
             }
+            // Value-based destination: 不依赖 NavigationLink 节点是否存在于视图树，
+            // 避免 @FetchRequest 更新移除 NavigationLink 时触发自动 pop，导致双重 dismiss。
+            .navigationDestination(for: UUID.self) { id in
+                // 删除路径上 entity 可能已被 deleted + save → @NSManaged 属性访问会 trap。
+                // 用 isDeleted/isFault/managedObjectContext 三重 guard 跳过失效引用。
+                if let entity = entities.first(where: { entity in
+                    guard !entity.isDeleted,
+                          !entity.isFault,
+                          entity.managedObjectContext != nil else { return false }
+                    return entity.id == id
+                }) {
+                    RecordingDetailView(
+                        entity: entity,
+                        isTranscribing: transcribingIds.contains(id),
+                        transcriptionError: transcriptionErrors[id],
+                        onDeleteRequested: { cancelTranscription(for: id) },
+                        onRetryTranscription: { retryTranscription(for: id) }
+                    )
+                }
+            }
             .alert("Cannot start", isPresented: errorBinding) {
                 Button("OK") { startError = nil }
             } message: {
                 Text(startError ?? "")
             }
-            // 修复 5：观察 RecordingService.interruptedError，系统中断时提示用户
             .alert("Recording interrupted", isPresented: interruptedErrorBinding) {
                 Button("OK") { service.interruptedError = nil }
             } message: {
@@ -88,14 +108,12 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
-                ForEach(entities) { entity in
-                    NavigationLink {
-                        RecordingDetailView(
-                            entity: entity,
-                            isTranscribing: transcribingIds.contains(entity.id),
-                            transcriptionError: transcriptionErrors[entity.id]
-                        )
-                    } label: {
+                // 用 \.objectID 替代默认的 Identifiable.id 做 List diffing。
+                // NSManagedObjectID 不依赖 fault 状态，删除 + save 后访问也安全；
+                // 默认基于 @NSManaged var id 的身份会在 entity turn into fault 后触发
+                // _unconditionallyBridgeFromObjectiveC(nil) → trap（即所谓"删除卡死"）。
+                ForEach(entities, id: \.objectID) { entity in
+                    NavigationLink(value: entity.id) {
                         row(for: entity)
                     }
                 }
@@ -178,10 +196,6 @@ struct ContentView: View {
     }
 
     private func handleStop(_ session: RecordingSession) {
-        let svc = transcriptionService
-        let ctx = context
-        let locale = settings.transcriptionLocale
-
         // 阶段 1：批量插入所有实体（不在循环内 save）
         for segment in session.segments {
             let _ = RecordingEntity.from(segment, context: context)
@@ -197,54 +211,105 @@ struct ContentView: View {
 
         // 阶段 3：所有实体保存成功后，批量启动转录 Task
         for segment in session.segments {
-            transcribingIds.insert(segment.id)
-            let recordingId = segment.id
+            startTranscription(for: segment.id, audioURL: segment.url)
+        }
+    }
 
-            Task { @MainActor in
-                do {
-                    let transcript = try await svc.transcribe(
-                        audioURL: segment.url,
-                        recordingId: recordingId,
-                        locale: locale
-                    )
-                    if let target = entities.first(where: { $0.id == recordingId }) {
-                        let te = TranscriptEntity.from(transcript, context: ctx)
-                        target.transcript = te
-                        te.recording = target
-                        do {
-                            try ctx.save()
-                        } catch {
-                            startError = error.localizedDescription
-                        }
+    /// 启动单条录音的转录任务。新录音和"重试转录"共用此入口。
+    private func startTranscription(for recordingId: UUID, audioURL: URL) {
+        // 重复触发时取消旧 task，避免两个 Task 同时跑
+        transcriptionTasks[recordingId]?.cancel()
+
+        let svc = transcriptionService
+        let ctx = context
+        let locale = settings.transcriptionLocale
+
+        transcriptionErrors.removeValue(forKey: recordingId)
+        transcribingIds.insert(recordingId)
+
+        let task = Task { @MainActor in
+            do {
+                let transcript = try await svc.transcribe(
+                    audioURL: audioURL,
+                    recordingId: recordingId,
+                    locale: locale
+                )
+                if let target = entities.first(where: { entity in
+                    guard !entity.isDeleted,
+                          !entity.isFault,
+                          entity.managedObjectContext != nil else { return false }
+                    return entity.id == recordingId
+                }) {
+                    // 重试场景下可能已存在旧 transcript，先删再建
+                    if let existing = target.transcript {
+                        ctx.delete(existing)
                     }
-                } catch {
+                    let te = TranscriptEntity.from(transcript, context: ctx)
+                    target.transcript = te
+                    te.recording = target
+                    do {
+                        try ctx.save()
+                    } catch {
+                        startError = error.localizedDescription
+                    }
+                }
+            } catch {
+                if !(error is CancellationError) {
                     transcriptionErrors[recordingId] = error.localizedDescription
                 }
-                transcribingIds.remove(recordingId)
+            }
+            transcribingIds.remove(recordingId)
+            transcriptionTasks.removeValue(forKey: recordingId)
+        }
+        transcriptionTasks[recordingId] = task
+    }
+
+    /// 详情页"重新转录"按钮的入口
+    private func retryTranscription(for entityId: UUID) {
+        guard let entity = entities.first(where: { entity in
+            guard !entity.isDeleted,
+                  !entity.isFault,
+                  entity.managedObjectContext != nil else { return false }
+            return entity.id == entityId
+        }) else { return }
+        startTranscription(for: entityId, audioURL: entity.fileURL)
+    }
+
+    private func deleteEntities(at offsets: IndexSet) {
+        // 当前帧仅做轻量主线程操作：取消转录 Task、Core Data delete。
+        // 文件删除与 context.save() 推迟到下一帧，避免主线程上同步 IO + WAL 落盘卡顿。
+        var pendingFiles: [(URL, UUID?)] = []
+        for i in offsets {
+            let entity = entities[i]
+            cancelTranscription(for: entity.id)
+            pendingFiles.append((entity.fileURL, entity.sessionId))
+            context.delete(entity)
+        }
+
+        let ctx = context
+        Task { @MainActor in
+            for (fileURL, sessionId) in pendingFiles {
+                try? FileManager.default.removeItem(at: fileURL)
+                if let sid = sessionId {
+                    let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                    let sessionDir = docs
+                        .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
+                        .appendingPathComponent(sid.uuidString, isDirectory: true)
+                    try? FileManager.default.removeItem(at: sessionDir)
+                }
+            }
+            do {
+                try ctx.save()
+            } catch {
+                deleteError = error.localizedDescription
             }
         }
     }
 
-    private func deleteEntities(at offsets: IndexSet) {
-        for i in offsets {
-            let entity = entities[i]
-            try? FileManager.default.removeItem(at: entity.fileURL)
-            // 修复 4：消除 TOCTOU，直接尝试删除 session 目录，目录非空时失败属预期行为
-            if let sid = entity.sessionId {
-                let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                let sessionDir = docs
-                    .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
-                    .appendingPathComponent(sid.uuidString, isDirectory: true)
-                try? FileManager.default.removeItem(at: sessionDir)
-            }
-            context.delete(entity)
-        }
-        // 修复 2：CoreData save 错误不再静默丢弃
-        do {
-            try context.save()
-        } catch {
-            deleteError = error.localizedDescription
-        }
+    func cancelTranscription(for id: UUID) {
+        transcriptionTasks[id]?.cancel()
+        transcriptionTasks.removeValue(forKey: id)
+        transcribingIds.remove(id)
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {

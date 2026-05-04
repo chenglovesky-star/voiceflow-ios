@@ -1,5 +1,6 @@
 import Foundation
 import Speech
+import os
 
 // PHASE 3 v1 — SFSpeechRecognizer with on-device recognition.
 // Honors ROADMAP §3 hard constraints: local, free, no upload.
@@ -15,6 +16,10 @@ import Speech
 //   3. 90 秒识别超时 — Task.detached 竞争取消，防止永久挂起
 final class OnDeviceTranscriptionService: TranscriptionService {
 
+    // 仅记录 metadata（locale、segment count、timing 等），永不记录转录文本本身。
+    // subsystem 命名空间隔离，发布版保留以便用户用 Console.app 抓诊断信息。
+    private static let log = Logger(subsystem: "com.voiceflow.app", category: "transcription")
+
     var isAvailable: Bool { isAvailable(for: .current) }
 
     func isAvailable(for locale: Locale) -> Bool {
@@ -24,23 +29,33 @@ final class OnDeviceTranscriptionService: TranscriptionService {
     }
 
     func transcribe(audioURL: URL, recordingId: UUID, locale: Locale) async throws -> Transcript {
+        let started = Date()
+        let fileSize = (try? FileManager.default.attributesOfItem(atPath: audioURL.path)[.size] as? Int64) ?? -1
+        Self.log.info("transcribe begin: requested locale=\(locale.identifier, privacy: .public), file size=\(fileSize) bytes")
+
         let status = await Self.requestAuthorization()
         guard status == .authorized else {
+            Self.log.error("transcribe abort: authorization status=\(status.rawValue, privacy: .public)")
             throw TranscriptionError.authorizationDenied
         }
 
         // locale 归一化：从 supportedLocales 找最佳匹配
         guard let resolvedLocale = Self.resolvedLocale(for: locale) else {
+            Self.log.error("transcribe abort: no supported locale for \(locale.identifier, privacy: .public)")
             throw TranscriptionError.unavailable
         }
 
         guard let recognizer = SFSpeechRecognizer(locale: resolvedLocale) else {
+            Self.log.error("transcribe abort: SFSpeechRecognizer init failed for \(resolvedLocale.identifier, privacy: .public)")
             throw TranscriptionError.unavailable
         }
+
+        Self.log.info("recognizer ready: resolved locale=\(resolvedLocale.identifier, privacy: .public), supportsOnDevice=\(recognizer.supportsOnDeviceRecognition), isAvailable=\(recognizer.isAvailable)")
 
         // 等待可用（模型首次加载时 isAvailable 可能暂时为 false）
         // waitForAvailability 现为 throws，CancellationError 直接向上传播
         guard try await Self.waitForAvailability(recognizer) else {
+            Self.log.error("transcribe abort: recognizer not available after wait, locale=\(resolvedLocale.identifier, privacy: .public)")
             throw TranscriptionError.unavailable
         }
 
@@ -52,13 +67,17 @@ final class OnDeviceTranscriptionService: TranscriptionService {
         request.addsPunctuation = true
 
         // 带超时保护的识别（90 秒）
-        return try await doRecognizeWithTimeout(
+        let transcript = try await doRecognizeWithTimeout(
             recognizer: recognizer,
             request: request,
             recordingId: recordingId,
             locale: resolvedLocale,
             timeoutSeconds: 90
         )
+
+        let elapsed = Date().timeIntervalSince(started)
+        Self.log.info("transcribe done: segments=\(transcript.segments.count), elapsed=\(String(format: "%.2f", elapsed))s")
+        return transcript
     }
 
     // MARK: - Locale 归一化
@@ -198,6 +217,15 @@ final class OnDeviceTranscriptionService: TranscriptionService {
                             confidence: Double(seg.confidence)
                         )
                     }
+                    // 空 segments 视为可重试的失败，而不是「成功但空」。
+                    // 让上层 UI 能给出明确文案 + 重试按钮，避免用户分不清
+                    // 「真没说话」「环境太吵」「locale 不匹配」「文件损坏」。
+                    if segments.isEmpty {
+                        guardian.tryRun {
+                            continuation.resume(throwing: TranscriptionError.noSpeechDetected)
+                        }
+                        return
+                    }
                     let transcript = Transcript(
                         recordingId: recordingId,
                         segments: segments,
@@ -210,9 +238,14 @@ final class OnDeviceTranscriptionService: TranscriptionService {
                 holder.recognitionTask = task
             }
         } onCancel: {
-            // 外层 Swift Task 取消时立即中止底层识别，不等待 90 秒超时
-            holder.recognitionTask?.cancel()
+            // 外层 Swift Task 取消时立即中止底层识别，不等待 90 秒超时。
+            // SFSpeechRecognitionTask.cancel() 同步等待 mediaserverd XPC 应答，
+            // 在主线程上调用会卡住 UI（删除录音时尤其明显），所以丢到后台 queue。
+            // 通过 holder（@unchecked Sendable）跨闭包传递非 Sendable 的 SFSpeechRecognitionTask。
             holder.timeoutItem?.cancel()
+            DispatchQueue.global(qos: .userInitiated).async {
+                holder.recognitionTask?.cancel()
+            }
         }
     }
 

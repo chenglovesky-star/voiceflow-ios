@@ -11,11 +11,14 @@ enum TranscriptionError: LocalizedError {
     case modelInstallFailed(Error)
     case audioReadFailed(Error)
     case engineFailed(Error)
+    /// 识别引擎正常运行但未识别到任何语音片段。常见原因：录音里没有人声、
+    /// 距麦克风过远、环境噪声淹没、语言与所选 locale 不匹配。
+    case noSpeechDetected
 
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "Transcription is not available on this device or for this language."
+            return "On-device speech model is unavailable for this language. iOS may still be downloading it; please retry in a moment."
         case .authorizationDenied:
             return "Speech recognition permission denied. Enable it in Settings → VoiceFlow."
         case .modelInstallFailed(let e):
@@ -24,6 +27,8 @@ enum TranscriptionError: LocalizedError {
             return "Couldn't read the audio file: \(e.localizedDescription)"
         case .engineFailed(let e):
             return "Transcription engine failed: \(e.localizedDescription)"
+        case .noSpeechDetected:
+            return "No speech detected. Try speaking closer to the mic in a quieter place, or check the transcription language in Settings."
         }
     }
 }

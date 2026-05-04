@@ -5,9 +5,12 @@ struct RecordingDetailView: View {
     var entity: RecordingEntity
     var isTranscribing: Bool
     var transcriptionError: String? = nil
+    var onDeleteRequested: (() -> Void)? = nil
+    var onRetryTranscription: (() -> Void)? = nil
 
     @Environment(\.managedObjectContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @State private var isDeleted = false
     @State private var shareItems: [Any] = []
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
@@ -18,38 +21,44 @@ struct RecordingDetailView: View {
     private let aiShareService = AIShareService()
 
     var body: some View {
-        VStack(spacing: 0) {
-            AudioPlayerView(url: entity.fileURL)
-                .frame(maxHeight: 180)
+        // pop アニメーション中に body が削除済み entity の @NSManaged プロパティに
+        // アクセスして NSObjectInaccessibleException を起こさないよう guard する。
+        if isDeleted {
+            Color.clear
+        } else {
+            VStack(spacing: 0) {
+                AudioPlayerView(url: entity.fileURL)
+                    .frame(maxHeight: 180)
 
-            Divider()
-
-            transcriptSection
-
-            if hasTranscript {
                 Divider()
-                sendToAICTA
+
+                transcriptSection
+
+                if hasTranscript {
+                    Divider()
+                    sendToAICTA
+                }
             }
-        }
-        .navigationTitle(entity.displayName)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                menu
+            .navigationTitle(entity.displayName)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    menu
+                }
             }
-        }
-        .sheet(isPresented: $isShareSheetPresented) {
-            ShareSheet(items: shareItems)
-        }
-        .alert("Export failed", isPresented: errorBinding) {
-            Button("OK") { exportError = nil }
-        } message: {
-            Text(exportError ?? "")
-        }
-        .alert("Sent", isPresented: aiToastBinding) {
-            Button("OK") { aiToast = nil }
-        } message: {
-            Text(aiToast ?? "")
+            .sheet(isPresented: $isShareSheetPresented) {
+                ShareSheet(items: shareItems)
+            }
+            .alert("Export failed", isPresented: errorBinding) {
+                Button("OK") { exportError = nil }
+            } message: {
+                Text(exportError ?? "")
+            }
+            .alert("Sent", isPresented: aiToastBinding) {
+                Button("OK") { aiToast = nil }
+            } message: {
+                Text(aiToast ?? "")
+            }
         }
     }
 
@@ -153,6 +162,15 @@ struct RecordingDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                    if let onRetry = onRetryTranscription {
+                        Button {
+                            onRetry()
+                        } label: {
+                            Label("Retry transcription", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
+                    }
                 } else {
                     Image(systemName: "text.bubble")
                         .font(.system(size: 48))
@@ -171,21 +189,35 @@ struct RecordingDetailView: View {
     }
 
     private func delete() {
-        try? FileManager.default.removeItem(at: entity.fileURL)
-        if let sid = entity.sessionId {
-            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let sessionDir = docs
-                .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
-                .appendingPathComponent(sid.uuidString, isDirectory: true)
-            try? FileManager.default.removeItem(at: sessionDir)
-        }
+        let fileURL = entity.fileURL
+        let sessionId = entity.sessionId
+
+        // 1. 取消正在进行的转录 Task，防止 SFSpeechRecognizer 持续占用 mediaserverd。
+        onDeleteRequested?()
+
+        // 2. 先让 body 切到 Color.clear，防止 pop 动画帧访问已删除 entity 的 @NSManaged 属性，
+        //    同时下一帧会触发 AudioPlayerView.onDisappear → controller.stop()，
+        //    在文件被删除前先释放 AVAudioPlayer 与 AVAudioSession。
+        isDeleted = true
+
         context.delete(entity)
-        // 修复 2：CoreData save 错误不再静默丢弃，失败时写入 exportError 并展示
-        do {
-            try context.save()
-            dismiss()
-        } catch {
-            exportError = error.localizedDescription
+        dismiss()
+
+        // 3. 文件删除与 ctx.save() 全部推迟到下一帧：
+        //    - 让 onDisappear 先执行，AVAudioPlayer 释放完再 unlink 文件，避免 AVFoundation 长尾；
+        //    - 让 @FetchRequest 的导航更新跨帧执行，避免同一帧内两次导航更新触发
+        //      "NavigationRequestObserver multiple updates" 崩溃。
+        let ctx = context
+        Task { @MainActor in
+            try? FileManager.default.removeItem(at: fileURL)
+            if let sid = sessionId {
+                let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                let sessionDir = docs
+                    .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
+                    .appendingPathComponent(sid.uuidString, isDirectory: true)
+                try? FileManager.default.removeItem(at: sessionDir)
+            }
+            try? ctx.save()
         }
     }
 
