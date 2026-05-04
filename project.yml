@@ -21,7 +21,7 @@ targets:
   VoiceFlow:
     type: application
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "16.0"
     sources:
       - path: VoiceFlow
         excludes:
@@ -49,6 +49,9 @@ targets:
           - chatgpt
           - googlegemini
           - claude
+          - bytedance.doubao
+          - kimichat
+          - tongyi
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"

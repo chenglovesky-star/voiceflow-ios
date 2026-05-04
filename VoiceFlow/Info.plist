@@ -28,6 +28,9 @@
 		<string>chatgpt</string>
 		<string>googlegemini</string>
 		<string>claude</string>
+		<string>bytedance.doubao</string>
+		<string>kimichat</string>
+		<string>tongyi</string>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>VoiceFlow records audio so it can transcribe what you said. Audio never leaves your device.</string>

@@ -11,13 +11,15 @@ struct AppSettingsTests {
         return UserDefaults(suiteName: suite)!
     }
 
-    @Test("defaults: 44.1k / 64kbps / iCloud off / onboarding incomplete")
+    @Test("defaults: 44.1k / 64kbps / iCloud off / onboarding incomplete / locale auto")
     func defaults() {
         let s = AppSettings(defaults: makeDefaults())
         #expect(s.defaultSampleRate == 44_100)
         #expect(s.defaultBitRate == 64_000)
         #expect(s.iCloudEnabled == false)
         #expect(s.onboardingComplete == false)
+        #expect(s.transcriptionLocaleId == AppSettings.autoLocaleId)
+        #expect(s.transcriptionLocale == .current)
     }
 
     @Test("changes persist via UserDefaults")
@@ -28,11 +30,14 @@ struct AppSettingsTests {
         s1.defaultBitRate = 128_000
         s1.iCloudEnabled = true
         s1.onboardingComplete = true
+        s1.transcriptionLocaleId = "zh-CN"
 
         let s2 = AppSettings(defaults: defaults)
         #expect(s2.defaultSampleRate == 48_000)
         #expect(s2.defaultBitRate == 128_000)
         #expect(s2.iCloudEnabled == true)
         #expect(s2.onboardingComplete == true)
+        #expect(s2.transcriptionLocaleId == "zh-CN")
+        #expect(s2.transcriptionLocale.identifier == "zh-CN")
     }
 }
