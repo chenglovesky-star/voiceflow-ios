@@ -114,7 +114,8 @@ final class RecordingService: NSObject, ObservableObject {
         }
 
         recorder = r
-        startedAt = Date()
+        let now = Date()
+        startedAt = now
         recentLevels = []
         elapsed = 0
         currentLevel = 0
@@ -122,7 +123,7 @@ final class RecordingService: NSObject, ObservableObject {
         return Recording(
             url: url,
             duration: 0,
-            createdAt: startedAt!,
+            createdAt: now,
             sessionId: currentSessionId,
             segmentIndex: currentSegmentIndex,
             totalSegments: 1 // Will be updated when session ends

@@ -52,6 +52,7 @@ final class AudioPlayerController: NSObject, ObservableObject {
         player?.pause()
         isPlaying = false
         ticker?.invalidate()
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     func seek(to time: TimeInterval) {

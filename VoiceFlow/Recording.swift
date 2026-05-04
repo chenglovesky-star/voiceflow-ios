@@ -47,10 +47,14 @@ struct Recording: Identifiable, Hashable, Sendable {
         return "Part \(segmentIndex + 1) of \(totalSegments)"
     }
 
-    static func defaultName(for date: Date) -> String {
+    private static let nameFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm"
-        return "Recording \(f.string(from: date))"
+        return f
+    }()
+
+    static func defaultName(for date: Date) -> String {
+        "Recording \(nameFormatter.string(from: date))"
     }
 
     static func == (lhs: Recording, rhs: Recording) -> Bool {

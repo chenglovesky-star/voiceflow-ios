@@ -6,6 +6,7 @@ struct ContentView: View {
     @ObservedObject private var settings = AppSettings.shared
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
+    @State private var deleteError: String?
     @State private var transcriptionErrors: [UUID: String] = [:]
 
     @Environment(\.managedObjectContext) private var context
@@ -52,6 +53,11 @@ struct ContentView: View {
                 Button("OK") { service.interruptedError = nil }
             } message: {
                 Text(service.interruptedError ?? "")
+            }
+            .alert("Delete failed", isPresented: deleteErrorBinding) {
+                Button("OK") { deleteError = nil }
+            } message: {
+                Text(deleteError ?? "")
             }
         }
     }
@@ -156,6 +162,13 @@ struct ContentView: View {
         )
     }
 
+    private var deleteErrorBinding: Binding<Bool> {
+        Binding(
+            get: { deleteError != nil },
+            set: { if !$0 { deleteError = nil } }
+        )
+    }
+
     private func start() async {
         do {
             try await service.start()
@@ -230,7 +243,7 @@ struct ContentView: View {
         do {
             try context.save()
         } catch {
-            startError = error.localizedDescription
+            deleteError = error.localizedDescription
         }
     }
 
