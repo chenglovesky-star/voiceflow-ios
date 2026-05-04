@@ -3,8 +3,6 @@ import UIKit
 
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
-    @State private var schemeTestResults: [String: Bool] = [:]
-    @State private var isTesting = false
 
     var body: some View {
         Form {
@@ -69,50 +67,9 @@ struct SettingsView: View {
                 Link("Support", destination: URL(string: "mailto:tsing@alumni.upenn.edu")!)
             }
 
-            #if DEBUG
-            Section("🔧 URL Scheme Debug") {
-                Button("Test All Schemes") {
-                    testAllSchemes()
-                }
-                .disabled(isTesting)
-
-                if !schemeTestResults.isEmpty {
-                    ForEach(AITarget.allCases, id: \.rawValue) { target in
-                        if let result = schemeTestResults[target.rawValue] {
-                            HStack {
-                                Text(target.displayName)
-                                Spacer()
-                                if result {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                    Text("✓ App installed")
-                                        .font(.caption)
-                                        .foregroundStyle(.green)
-                                } else {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.red)
-                                    Text("✗ Not installed (uses web)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            #endif
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func testAllSchemes() {
-        isTesting = true
-        schemeTestResults = [:]
-        for target in AITarget.allCases {
-            schemeTestResults[target.rawValue] = UIApplication.shared.canOpenURL(target.detectionURL)
-        }
-        isTesting = false
     }
 
     private var appVersion: String {

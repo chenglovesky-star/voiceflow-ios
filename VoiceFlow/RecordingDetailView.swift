@@ -15,10 +15,8 @@ struct RecordingDetailView: View {
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
     @State private var isExporting = false
-    @State private var aiToast: String?
 
     private let exportService = ExportService()
-    private let aiShareService = AIShareService()
 
     var body: some View {
         // pop アニメーション中に body が削除済み entity の @NSManaged プロパティに
@@ -54,11 +52,6 @@ struct RecordingDetailView: View {
             } message: {
                 Text(exportError ?? "")
             }
-            .alert("Sent", isPresented: aiToastBinding) {
-                Button("OK") { aiToast = nil }
-            } message: {
-                Text(aiToast ?? "")
-            }
         }
     }
 
@@ -68,20 +61,12 @@ struct RecordingDetailView: View {
     }
 
     private var sendToAICTA: some View {
-        Menu {
-            ForEach(AITarget.allCases, id: \.self) { target in
-                Button {
-                    Task { await sendToAI(target) }
-                } label: {
-                    Label(target.displayName, systemImage: target.systemImage)
-                }
-            }
+        Button {
+            shareTranscript()
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                Text("Send to AI")
-                Image(systemName: "chevron.down")
-                    .font(.caption)
+                Image(systemName: "square.and.arrow.up")
+                Text("分享转录")
             }
             .font(.headline)
             .foregroundColor(.white)
@@ -242,25 +227,19 @@ struct RecordingDetailView: View {
         )
     }
 
-    private var aiToastBinding: Binding<Bool> {
-        Binding(
-            get: { aiToast != nil },
-            set: { if !$0 { aiToast = nil } }
-        )
-    }
-
-    private func sendToAI(_ target: AITarget) async {
+    /// 弹系统 Share Sheet 让用户选目标 app（豆包/ChatGPT/Claude/Kimi/微信...）。
+    /// 文本通过 NSItemProvider 走系统级共享，目标 app 的 Share Extension 会
+    /// 把内容直接放进对话框/输入框，**用户不需要再手动粘贴**。
+    /// 同时把文本写入剪贴板作为兜底（用户取消 ShareSheet 后可手动粘贴）。
+    private func shareTranscript() {
         let segments = entity.transcript?.segments ?? []
         guard !segments.isEmpty else {
             exportError = "No transcript yet to send."
             return
         }
         let text = segments.map(\.text).joined(separator: " ")
-        let result = await aiShareService.send(text, to: target)
-        if result.installed {
-            aiToast = "Transcript copied. Opening \(target.displayName)…"
-        } else {
-            aiToast = "Transcript copied. \(target.displayName) is not installed; opening web."
-        }
+        UIPasteboard.general.string = text
+        shareItems = [text]
+        isShareSheetPresented = true
     }
 }
