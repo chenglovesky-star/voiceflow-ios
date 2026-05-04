@@ -4,8 +4,10 @@ import CoreData
 struct RecordingDetailView: View {
     var entity: RecordingEntity
     var isTranscribing: Bool
+    var transcriptionError: String? = nil
 
     @Environment(\.managedObjectContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @State private var shareItems: [Any] = []
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
@@ -140,15 +142,27 @@ struct RecordingDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             VStack(spacing: 16) {
-                Image(systemName: "text.bubble")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
-                Text("Transcript pending")
-                    .font(.headline)
-                Text("Transcription will appear here when complete.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                if let err = transcriptionError {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
+                    Text("Transcription failed")
+                        .font(.headline)
+                    Text(err)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                } else {
+                    Image(systemName: "text.bubble")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.secondary)
+                    Text("Transcript pending")
+                        .font(.headline)
+                    Text("Transcription will appear here when complete.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -158,7 +172,13 @@ struct RecordingDetailView: View {
     private func delete() {
         try? FileManager.default.removeItem(at: entity.fileURL)
         context.delete(entity)
-        try? context.save()
+        // 修复 2：CoreData save 错误不再静默丢弃，失败时写入 exportError 并展示
+        do {
+            try context.save()
+            dismiss()
+        } catch {
+            exportError = error.localizedDescription
+        }
     }
 
     private func export(format: ExportFormat) async {
