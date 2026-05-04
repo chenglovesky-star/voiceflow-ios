@@ -26,6 +26,62 @@ enum RecordingError: LocalizedError {
     }
 }
 
+/// 录前环境探测的结果。让用户在正式开录前先确认环境质量。
+struct EnvironmentProbe: Equatable {
+    /// 探测窗口内 averagePower 的均值（dB，AVAudioRecorder scale: -160=silence, 0=clipping）
+    let avgDB: Float
+    /// 探测窗口内 peakPower 的最大值
+    let peakDB: Float
+    /// 探测时长（秒）
+    let durationSeconds: TimeInterval
+    /// 探测完成时刻；UI 用于"超过 N 秒未操作则自动重测"的防鲜判断
+    let timestamp: Date
+    /// 探测分类。基于 iPhone 17 Pro 实测的安静环境（-41 ~ -45 dB）来标定阈值。
+    let quality: Quality
+
+    enum Quality: Equatable {
+        case quiet        // avg < -38 dB，环境很安静
+        case acceptable   // -38 ≤ avg ≤ -28 dB，可以录音
+        case noisy        // avg > -28 dB，环境过吵
+        case clipping     // peak > -3 dB，信号过载（往往是离麦克风太近）
+    }
+
+    /// "可以直接进入录音"的友好结果（quiet / acceptable）
+    var isFavorable: Bool {
+        switch quality {
+        case .quiet, .acceptable: return true
+        case .noisy, .clipping:   return false
+        }
+    }
+
+    var headline: String {
+        switch quality {
+        case .quiet:      return "环境很安静"
+        case .acceptable: return "环境正常"
+        case .noisy:      return "环境较吵"
+        case .clipping:   return "声音过大"
+        }
+    }
+
+    var detail: String {
+        switch quality {
+        case .quiet:      return "可以开始录音"
+        case .acceptable: return "可以开始录音"
+        case .noisy:      return "建议换个安静的地方，否则转录可能不准"
+        case .clipping:   return "请远离麦克风后再试"
+        }
+    }
+
+    var systemImage: String {
+        switch quality {
+        case .quiet:      return "checkmark.circle.fill"
+        case .acceptable: return "checkmark.circle"
+        case .noisy:      return "speaker.wave.3.fill"
+        case .clipping:   return "waveform.badge.exclamationmark"
+        }
+    }
+}
+
 /// 录音过程中的环境质量提醒。仅作 UI 提示，不阻断录音。
 enum NoiseWarning: Equatable {
     /// 环境本底过吵（baseline > -30 dB）；语音可能被噪声淹没。
@@ -118,7 +174,10 @@ final class RecordingService: NSObject, ObservableObject {
         }
     }
 
-    func start() async throws {
+    /// 启动录音。
+    /// - Parameter externalBaseline: 来自 `probeEnvironment()` 的环境基线 dB；
+    ///   提供后跳过录音头 1s 自采，直接用 probe 值做后续 SNR 监控。
+    func start(externalBaseline: Float? = nil) async throws {
         guard !isRecording else { throw RecordingError.alreadyRecording }
         guard await requestPermission() else { throw RecordingError.permissionDenied }
 
@@ -135,6 +194,22 @@ final class RecordingService: NSObject, ObservableObject {
         currentSegmentIndex = 0
         segments = []
 
+        // Baseline 初始化：优先使用 probe 值；否则启用录音头 1s 自采窗口（兜底路径）
+        if let externalBaseline {
+            baselineDB = externalBaseline
+            baselineSamples = []
+            baselineDeadline = nil
+            noiseWarning = externalBaseline > Self.noisyBaselineThresholdDB ? .noisyEnvironment : nil
+            Self.log.info("baseline injected from probe: \(String(format: "%.1f", externalBaseline)) dB")
+        } else {
+            baselineDB = nil
+            baselineSamples = []
+            baselineDeadline = Date().addingTimeInterval(Self.baselineWindow)
+            noiseWarning = nil
+        }
+        lowSNRTicks = 0
+        clippingTicks = 0
+
         let recording = try startNewSegment()
 
         // Store the first segment
@@ -143,6 +218,85 @@ final class RecordingService: NSObject, ObservableObject {
         isRecording = true
         startMetering()
         startSegmentTimer()
+    }
+
+    /// 录前环境探测：用一个临时 recorder 在指定时长内采样麦克风电平，
+    /// 探测期间 `currentLevel` 仍会更新以驱动 UI 实时电平条。结束后自动清理临时文件与 audio session。
+    /// - Parameter duration: 探测时长（默认 1.5s）
+    /// - Returns: 探测结果，包含 avg/peak dB 和质量分类
+    func probeEnvironment(duration: TimeInterval = 1.5) async throws -> EnvironmentProbe {
+        guard !isRecording else { throw RecordingError.alreadyRecording }
+        guard await requestPermission() else { throw RecordingError.permissionDenied }
+
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
+            try session.setActive(true, options: [])
+        } catch {
+            throw RecordingError.sessionConfigurationFailed(error)
+        }
+
+        // 临时探针文件，写到 tmp，结束后立即删除（探针不留档）
+        let probeURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("probe-\(UUID().uuidString).m4a")
+        let settings: [String: Any] = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 16_000,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderBitRateKey: 32_000
+        ]
+
+        let r: AVAudioRecorder
+        do {
+            r = try AVAudioRecorder(url: probeURL, settings: settings)
+        } catch {
+            throw RecordingError.recorderInitFailed(error)
+        }
+        r.isMeteringEnabled = true
+        guard r.record() else {
+            throw RecordingError.recorderInitFailed(NSError(domain: "VoiceFlow", code: -1))
+        }
+
+        Self.log.info("probe begin: duration=\(duration)s")
+
+        var avgs: [Float] = []
+        var peaks: [Float] = []
+        let started = Date()
+        // 100ms 采样间隔，1.5s ≈ 15 个样本
+        while Date().timeIntervalSince(started) < duration {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            r.updateMeters()
+            let avg = r.averagePower(forChannel: 0)
+            let peak = r.peakPower(forChannel: 0)
+            avgs.append(avg)
+            peaks.append(peak)
+            // 驱动 UI 电平条
+            currentLevel = max(0, min(1, (avg + 50) / 50))
+        }
+        r.stop()
+        try? FileManager.default.removeItem(at: probeURL)
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        currentLevel = 0
+
+        let avgDB = avgs.isEmpty ? Float(-160) : avgs.reduce(0, +) / Float(avgs.count)
+        let peakDB = peaks.max() ?? Float(-160)
+        let quality = Self.classifyEnvironment(avgDB: avgDB, peakDB: peakDB)
+        Self.log.info("probe done: avg=\(String(format: "%.1f", avgDB))dB peak=\(String(format: "%.1f", peakDB))dB quality=\(String(describing: quality), privacy: .public)")
+
+        return EnvironmentProbe(
+            avgDB: avgDB,
+            peakDB: peakDB,
+            durationSeconds: duration,
+            timestamp: Date(),
+            quality: quality
+        )
+    }
+
+    private static func classifyEnvironment(avgDB: Float, peakDB: Float) -> EnvironmentProbe.Quality {
+        if peakDB > clippingThresholdDB { return .clipping }
+        if avgDB > -28 { return .noisy }
+        if avgDB > -38 { return .acceptable }
+        return .quiet
     }
 
     /// Starts a new recording segment and returns the Recording object
@@ -176,15 +330,7 @@ final class RecordingService: NSObject, ObservableObject {
         elapsed = 0
         currentLevel = 0
 
-        // 仅会话第一段录音时采集环境基线；分段切换不重新采。
-        if currentSegmentIndex == 0 {
-            baselineDB = nil
-            baselineSamples = []
-            baselineDeadline = now.addingTimeInterval(Self.baselineWindow)
-            lowSNRTicks = 0
-            clippingTicks = 0
-            noiseWarning = nil
-        }
+        // baseline / noiseWarning 状态由 start() 统一接管；分段切换内不动它们。
 
         return Recording(
             url: url,

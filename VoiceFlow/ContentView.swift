@@ -9,6 +9,8 @@ struct ContentView: View {
     @State private var startError: String?
     @State private var deleteError: String?
     @State private var transcriptionErrors: [UUID: String] = [:]
+    /// 控制录前环境探测页的显示。点 mic → 进入探测 → 探测完成或用户确认后切到正式录音
+    @State private var isProbing: Bool = false
 
     @Environment(\.managedObjectContext) private var context
 
@@ -78,6 +80,16 @@ struct ContentView: View {
                 Button("OK") { deleteError = nil }
             } message: {
                 Text(deleteError ?? "")
+            }
+            .fullScreenCover(isPresented: $isProbing) {
+                EnvironmentProbeView(
+                    service: service,
+                    onCancel: { isProbing = false },
+                    onProceed: { probe in
+                        isProbing = false
+                        Task { await start(with: probe) }
+                    }
+                )
             }
         }
     }
@@ -151,7 +163,8 @@ struct ContentView: View {
 
     private var startButton: some View {
         Button {
-            Task { await start() }
+            // 先进入环境探测页，由探测结果决定是否进入正式录音
+            isProbing = true
         } label: {
             ZStack {
                 Circle()
@@ -187,9 +200,9 @@ struct ContentView: View {
         )
     }
 
-    private func start() async {
+    private func start(with probe: EnvironmentProbe) async {
         do {
-            try await service.start()
+            try await service.start(externalBaseline: probe.avgDB)
         } catch {
             startError = error.localizedDescription
         }
