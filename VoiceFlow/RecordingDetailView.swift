@@ -101,6 +101,7 @@ struct RecordingDetailView: View {
             Button(role: .destructive, action: delete) {
                 Label("Delete", systemImage: "trash")
             }
+            .disabled(isExporting)
         } label: {
             if isExporting {
                 ProgressView()
