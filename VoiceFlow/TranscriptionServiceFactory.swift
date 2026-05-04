@@ -1,9 +1,9 @@
 import Foundation
 
 struct TranscriptionServiceFactory {
-    static func make() -> any TranscriptionService {
+    static func make(locale: Locale = .current) -> any TranscriptionService {
         let primary = OnDeviceTranscriptionService()
-        if primary.isAvailable {
+        if primary.isAvailable(for: locale) {
             return primary
         }
         return WhisperKitTranscriptionService()
