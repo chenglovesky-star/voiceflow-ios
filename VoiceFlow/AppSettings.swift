@@ -10,7 +10,10 @@ final class AppSettings: ObservableObject {
         static let bitRate = "settings.bitRate"
         static let iCloudEnabled = "settings.iCloudEnabled"
         static let onboardingComplete = "settings.onboardingComplete"
+        static let transcriptionLocaleId = "settings.transcriptionLocaleId"
     }
+
+    static let autoLocaleId = "auto"
 
     private let defaults: UserDefaults
 
@@ -26,6 +29,14 @@ final class AppSettings: ObservableObject {
     @Published var onboardingComplete: Bool {
         didSet { defaults.set(onboardingComplete, forKey: Keys.onboardingComplete) }
     }
+    @Published var transcriptionLocaleId: String {
+        didSet { defaults.set(transcriptionLocaleId, forKey: Keys.transcriptionLocaleId) }
+    }
+
+    var transcriptionLocale: Locale {
+        if transcriptionLocaleId == Self.autoLocaleId { return .current }
+        return Locale(identifier: transcriptionLocaleId)
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -33,5 +44,6 @@ final class AppSettings: ObservableObject {
         self.defaultBitRate = (defaults.object(forKey: Keys.bitRate) as? Int) ?? 64_000
         self.iCloudEnabled = defaults.bool(forKey: Keys.iCloudEnabled)
         self.onboardingComplete = defaults.bool(forKey: Keys.onboardingComplete)
+        self.transcriptionLocaleId = defaults.string(forKey: Keys.transcriptionLocaleId) ?? Self.autoLocaleId
     }
 }
