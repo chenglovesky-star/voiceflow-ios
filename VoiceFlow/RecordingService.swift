@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Combine
+import os
 
 enum RecordingError: LocalizedError {
     case permissionDenied
@@ -25,6 +26,35 @@ enum RecordingError: LocalizedError {
     }
 }
 
+/// 录音过程中的环境质量提醒。仅作 UI 提示，不阻断录音。
+enum NoiseWarning: Equatable {
+    /// 环境本底过吵（baseline > -30 dB）；语音可能被噪声淹没。
+    case noisyEnvironment
+    /// 信号电平接近 baseline（SNR < 6 dB）持续若干秒；用户可能离麦克风太远或音量太低。
+    case tooQuiet
+    /// 峰值持续接近 0 dB；存在削波失真。
+    case clipping
+
+    var message: String {
+        switch self {
+        case .noisyEnvironment:
+            return "Background noise is high — transcription may be inaccurate."
+        case .tooQuiet:
+            return "Speak louder or move closer to the mic."
+        case .clipping:
+            return "Audio is clipping — move further from the mic."
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .noisyEnvironment: return "speaker.wave.3.fill"
+        case .tooQuiet:         return "mic.slash"
+        case .clipping:         return "waveform.badge.exclamationmark"
+        }
+    }
+}
+
 @MainActor
 final class RecordingService: NSObject, ObservableObject {
     @Published private(set) var isRecording: Bool = false
@@ -32,6 +62,8 @@ final class RecordingService: NSObject, ObservableObject {
     @Published private(set) var elapsed: TimeInterval = 0
     @Published private(set) var recentLevels: [Float] = []
     @Published var interruptedError: String?
+    /// 当前录音过程中的环境提醒；nil 表示无问题。仅提示，不打断录音。
+    @Published private(set) var noiseWarning: NoiseWarning?
 
     /// Duration in seconds after which a new segment is automatically created (default: 10 minutes)
     var segmentDuration: TimeInterval = 600
@@ -42,6 +74,26 @@ final class RecordingService: NSObject, ObservableObject {
     private var startedAt: Date?
     private let levelsCapacity = 60
 
+    // 等待 audioRecorderDidFinishRecording 触发后再 return —— AAC 编码器
+    // 的尾部 flush 是异步的，过早读取 m4a 会拿到不完整文件，
+    // 导致 SFSpeechURLRecognitionRequest 解码后无可识别音频，最终转录为空。
+    private var stopContinuation: CheckedContinuation<Bool, Never>?
+
+    // 噪声检测相关。录音开始头 1s 采集 baseline averagePower，之后每个
+    // 200ms tick 用「当前 averagePower - baseline」估计 SNR。
+    // 阈值参考 AVAudioRecorder dB scale：-160=silence, 0=clipping。
+    private var baselineDB: Float?
+    private var baselineSamples: [Float] = []
+    private var baselineDeadline: Date?
+    private var lowSNRTicks: Int = 0
+    private var clippingTicks: Int = 0
+    private static let baselineWindow: TimeInterval = 1.0
+    private static let lowSNRThresholdDB: Float = 6
+    private static let lowSNRTicksRequired = 15        // 3 秒（200ms × 15）
+    private static let clippingThresholdDB: Float = -3
+    private static let clippingTicksRequired = 5       // 1 秒（200ms × 5）
+    private static let noisyBaselineThresholdDB: Float = -30
+
     /// Current recording session
     private var currentSessionId: UUID?
     private var currentSegmentIndex: Int = 0
@@ -49,6 +101,10 @@ final class RecordingService: NSObject, ObservableObject {
 
     nonisolated static let recordingsDirectoryName = "recordings"
     nonisolated static let sessionsDirectoryName = "sessions"
+
+    // metadata-only 日志，用于诊断 finalize 失败、文件大小等。永不记录音频内容。
+    // nonisolated 让 delegate 回调（也是 nonisolated）可以访问。
+    nonisolated static let log = Logger(subsystem: "com.voiceflow.app", category: "recording")
 
     func requestPermission() async -> Bool {
         if #available(iOS 17.0, *) {
@@ -120,6 +176,16 @@ final class RecordingService: NSObject, ObservableObject {
         elapsed = 0
         currentLevel = 0
 
+        // 仅会话第一段录音时采集环境基线；分段切换不重新采。
+        if currentSegmentIndex == 0 {
+            baselineDB = nil
+            baselineSamples = []
+            baselineDeadline = now.addingTimeInterval(Self.baselineWindow)
+            lowSNRTicks = 0
+            clippingTicks = 0
+            noiseWarning = nil
+        }
+
         return Recording(
             url: url,
             duration: 0,
@@ -176,7 +242,7 @@ final class RecordingService: NSObject, ObservableObject {
     }
 
     @discardableResult
-    func stop() throws -> RecordingSession {
+    func stop() async throws -> RecordingSession {
         guard let recorder, let startedAt, let sessionId = currentSessionId else {
             throw RecordingError.notRecording
         }
@@ -186,7 +252,25 @@ final class RecordingService: NSObject, ObservableObject {
         segmentTimer = nil
 
         let duration = Date().timeIntervalSince(startedAt)
-        recorder.stop()
+
+        // 等 AVAudioRecorderDelegate.audioRecorderDidFinishRecording 回调，
+        // 确保 m4a 文件 moov atom + 全部音频帧已落盘，转录器读到的是完整文件。
+        // 同时设置 1.5s 守门时限，防止某些情况下 delegate 永不触发卡死 UI。
+        let success = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+            stopContinuation = cont
+            recorder.stop()
+
+            // 守门定时器：若 1.5s 内 delegate 未触发，认定 finalize 失败但继续流程
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                guard let self else { return }
+                if let pending = self.stopContinuation {
+                    self.stopContinuation = nil
+                    Self.log.error("stop: finalize timeout (1.5s); proceeding with potentially incomplete file")
+                    pending.resume(returning: false)
+                }
+            }
+        }
+        Self.log.info("stop: finalize success=\(success), duration=\(String(format: "%.2f", duration))s")
 
         // Finalize the last segment
         let finalSegment = Recording(
@@ -243,6 +327,7 @@ final class RecordingService: NSObject, ObservableObject {
         guard let recorder, isRecording else { return }
         recorder.updateMeters()
         let avg = recorder.averagePower(forChannel: 0)
+        let peak = recorder.peakPower(forChannel: 0)
         let normalized = max(0, min(1, (avg + 50) / 50))
         currentLevel = normalized
         recentLevels.append(normalized)
@@ -251,6 +336,55 @@ final class RecordingService: NSObject, ObservableObject {
         }
         if let started = startedAt {
             elapsed = Date().timeIntervalSince(started)
+        }
+
+        updateNoiseDiagnostics(avgDB: avg, peakDB: peak)
+    }
+
+    /// 用 averagePower / peakPower 估计录音环境质量并更新 noiseWarning。
+    /// 头 1s 采 baseline，之后用 SNR 判 tooQuiet、用 peak 判 clipping、用 baseline 判 noisyEnvironment。
+    private func updateNoiseDiagnostics(avgDB: Float, peakDB: Float) {
+        // 仍在 baseline 采集窗口
+        if let deadline = baselineDeadline, Date() < deadline {
+            baselineSamples.append(avgDB)
+            return
+        }
+        // 窗口结束的第一个 tick：定型 baseline
+        if baselineDB == nil, !baselineSamples.isEmpty {
+            let mean = baselineSamples.reduce(0, +) / Float(baselineSamples.count)
+            baselineDB = mean
+            Self.log.info("noise baseline established: \(String(format: "%.1f", mean)) dB across \(self.baselineSamples.count) samples")
+            if mean > Self.noisyBaselineThresholdDB {
+                noiseWarning = .noisyEnvironment
+            }
+            baselineSamples.removeAll(keepingCapacity: false)
+        }
+
+        guard let baseline = baselineDB else { return }
+
+        // Clipping 检测：peak 持续高位
+        if peakDB > Self.clippingThresholdDB {
+            clippingTicks += 1
+            if clippingTicks >= Self.clippingTicksRequired {
+                noiseWarning = .clipping
+            }
+        } else {
+            clippingTicks = 0
+        }
+
+        // SNR 检测：信号距 baseline 太近
+        let snr = avgDB - baseline
+        if snr < Self.lowSNRThresholdDB {
+            lowSNRTicks += 1
+            if lowSNRTicks >= Self.lowSNRTicksRequired,
+               noiseWarning != .clipping,
+               noiseWarning != .noisyEnvironment {
+                noiseWarning = .tooQuiet
+            }
+        } else {
+            lowSNRTicks = 0
+            // 信号回到正常区间且当前是 tooQuiet 提示，清除以让下一次提醒重新触发
+            if noiseWarning == .tooQuiet { noiseWarning = nil }
         }
     }
 
@@ -267,6 +401,12 @@ final class RecordingService: NSObject, ObservableObject {
         currentSessionId = nil
         currentSegmentIndex = 0
         segments = []
+        baselineDB = nil
+        baselineSamples = []
+        baselineDeadline = nil
+        lowSNRTicks = 0
+        clippingTicks = 0
+        noiseWarning = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -290,14 +430,29 @@ final class RecordingService: NSObject, ObservableObject {
 
 extension RecordingService: AVAudioRecorderDelegate {
     nonisolated func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        guard !flag else { return }
+        let url = recorder.url
+        let size = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? -1
+        Self.log.info("audioRecorderDidFinishRecording: success=\(flag), file size=\(size) bytes, name=\(url.lastPathComponent, privacy: .public)")
         Task { @MainActor [weak self] in
-            self?.interruptedError = "录音因系统中断而停止"
-            self?.cleanup()
+            guard let self else { return }
+            // 显式 stop() 在等这个 continuation；resume 后由 stop() 继续 finalize segments。
+            if let cont = self.stopContinuation {
+                self.stopContinuation = nil
+                cont.resume(returning: flag)
+                return
+            }
+            // 否则是系统中断（来电/路由变化等），按原中断流程处理。
+            // 注意：advanceToNextSegment 内的 recorder.stop() 也会触发本回调，
+            // 但那时立刻又开了新 recorder、isRecording 仍为 true，flag 通常为 true 不进 cleanup。
+            if !flag {
+                self.interruptedError = "录音因系统中断而停止"
+                self.cleanup()
+            }
         }
     }
 
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        Self.log.error("audioRecorderEncodeErrorDidOccur: \(error?.localizedDescription ?? "nil", privacy: .public)")
         Task { @MainActor [weak self] in
             self?.interruptedError = error?.localizedDescription ?? "录音编码错误"
             self?.cleanup()

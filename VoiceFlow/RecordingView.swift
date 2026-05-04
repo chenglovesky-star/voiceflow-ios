@@ -18,6 +18,11 @@ struct RecordingView: View {
                 .frame(height: 100)
                 .padding(.horizontal, 24)
 
+            if let warning = service.noiseWarning {
+                noiseBanner(warning)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
             Spacer()
 
             Button(action: stop) {
@@ -33,10 +38,16 @@ struct RecordingView: View {
             .accessibilityLabel("Stop recording")
             .padding(.bottom, 40)
         }
+        .animation(.easeInOut(duration: 0.2), value: service.noiseWarning)
         .alert("Error stopping", isPresented: errorBinding) {
             Button("OK") { stopError = nil }
         } message: {
             Text(stopError ?? "")
+        }
+        .alert("录音中断", isPresented: interruptedErrorBinding) {
+            Button("确定") { service.interruptedError = nil }
+        } message: {
+            Text(service.interruptedError ?? "")
         }
     }
 
@@ -47,13 +58,43 @@ struct RecordingView: View {
         )
     }
 
+    private var interruptedErrorBinding: Binding<Bool> {
+        Binding(
+            get: { service.interruptedError != nil },
+            set: { if !$0 { service.interruptedError = nil } }
+        )
+    }
+
     private func stop() {
-        do {
-            let recording = try service.stop()
-            onStop(recording)
-        } catch {
-            stopError = error.localizedDescription
+        Task { @MainActor in
+            do {
+                let recording = try await service.stop()
+                onStop(recording)
+            } catch {
+                stopError = error.localizedDescription
+            }
         }
+    }
+
+    @ViewBuilder
+    private func noiseBanner(_ warning: NoiseWarning) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: warning.systemImage)
+                .font(.body)
+            Text(warning.message)
+                .font(.subheadline)
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .foregroundColor(.orange)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.orange.opacity(0.12))
+        )
+        .padding(.horizontal, 24)
+        .accessibilityElement(children: .combine)
     }
 
     private func formatTime(_ t: TimeInterval) -> String {
