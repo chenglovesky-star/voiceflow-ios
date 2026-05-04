@@ -28,7 +28,7 @@ final class AudioPlayerController: NSObject, ObservableObject {
     func play() {
         guard let player else { return }
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth, .mixWithOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             // best effort; playback may still work
@@ -62,6 +62,7 @@ final class AudioPlayerController: NSObject, ObservableObject {
 
     func stop() {
         player?.stop()
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         player = nil
         ticker?.invalidate()
         ticker = nil
