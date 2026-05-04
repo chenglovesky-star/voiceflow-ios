@@ -1,11 +1,11 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct RecordingDetailView: View {
-    @Bindable var entity: RecordingEntity
+    @ObservedObject var entity: RecordingEntity
     var isTranscribing: Bool
 
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @State private var shareItems: [Any] = []
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
@@ -141,8 +141,8 @@ struct RecordingDetailView: View {
 
     private func delete() {
         try? FileManager.default.removeItem(at: entity.fileURL)
-        modelContext.delete(entity)
-        try? modelContext.save()
+        context.delete(entity)
+        try? context.save()
     }
 
     private func export(format: ExportFormat) async {

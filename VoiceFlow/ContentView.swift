@@ -1,5 +1,5 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct ContentView: View {
     @State private var service = RecordingService()
@@ -7,9 +7,13 @@ struct ContentView: View {
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
 
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \RecordingEntity.createdAt, order: .reverse)
-    private var entities: [RecordingEntity]
+    @Environment(\.managedObjectContext) private var context
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \RecordingEntity.createdAt, ascending: false)],
+        animation: .default
+    )
+    private var entities: FetchedResults<RecordingEntity>
 
     private let transcriptionService: any TranscriptionService = TranscriptionServiceFactory.make()
 
@@ -136,13 +140,12 @@ struct ContentView: View {
     }
 
     private func handleStop(_ recording: Recording) {
-        let entity = RecordingEntity.from(recording)
-        modelContext.insert(entity)
-        do { try modelContext.save() } catch { }
+        let entity = RecordingEntity.from(recording, context: context)
+        try? context.save()
 
         transcribingIds.insert(recording.id)
         let svc = transcriptionService
-        let ctx = modelContext
+        let ctx = context
         let recordingId = recording.id
 
         Task {
@@ -153,8 +156,7 @@ struct ContentView: View {
                     locale: .current
                 )
                 if let target = entities.first(where: { $0.id == recordingId }) {
-                    let te = TranscriptEntity.from(transcript)
-                    ctx.insert(te)
+                    let te = TranscriptEntity.from(transcript, context: ctx)
                     target.transcript = te
                     try? ctx.save()
                 }
@@ -169,9 +171,9 @@ struct ContentView: View {
         for i in offsets {
             let entity = entities[i]
             try? FileManager.default.removeItem(at: entity.fileURL)
-            modelContext.delete(entity)
+            context.delete(entity)
         }
-        try? modelContext.save()
+        try? context.save()
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {
@@ -183,6 +185,11 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: [RecordingEntity.self, TranscriptEntity.self], inMemory: true)
+    let container = NSPersistentContainer(name: "VoiceFlow")
+    let description = NSPersistentStoreDescription()
+    description.type = NSInMemoryStoreType
+    container.persistentStoreDescriptions = [description]
+    container.loadPersistentStores { _, _ in }
+    return ContentView()
+        .environment(\.managedObjectContext, container.viewContext)
 }
