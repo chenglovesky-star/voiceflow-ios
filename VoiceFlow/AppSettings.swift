@@ -11,6 +11,7 @@ final class AppSettings: ObservableObject {
         static let iCloudEnabled = "settings.iCloudEnabled"
         static let onboardingComplete = "settings.onboardingComplete"
         static let transcriptionLocaleId = "settings.transcriptionLocaleId"
+        static let waveformStyleId = "settings.waveformStyleId"
     }
 
     static let autoLocaleId = "auto"
@@ -32,10 +33,18 @@ final class AppSettings: ObservableObject {
     @Published var transcriptionLocaleId: String {
         didSet { defaults.set(transcriptionLocaleId, forKey: Keys.transcriptionLocaleId) }
     }
+    @Published var waveformStyleId: String {
+        didSet { defaults.set(waveformStyleId, forKey: Keys.waveformStyleId) }
+    }
 
     var transcriptionLocale: Locale {
         if transcriptionLocaleId == Self.autoLocaleId { return .current }
         return Locale(identifier: transcriptionLocaleId)
+    }
+
+    /// 录音视觉化样式。未设置时默认 .ecg（心电图）。
+    var waveformStyle: WaveformStyle {
+        WaveformStyle(rawValue: waveformStyleId) ?? .ecg
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -45,5 +54,6 @@ final class AppSettings: ObservableObject {
         self.iCloudEnabled = defaults.bool(forKey: Keys.iCloudEnabled)
         self.onboardingComplete = defaults.bool(forKey: Keys.onboardingComplete)
         self.transcriptionLocaleId = defaults.string(forKey: Keys.transcriptionLocaleId) ?? Self.autoLocaleId
+        self.waveformStyleId = defaults.string(forKey: Keys.waveformStyleId) ?? WaveformStyle.ecg.rawValue
     }
 }

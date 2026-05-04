@@ -24,6 +24,18 @@ struct SettingsView: View {
             }
 
             Section {
+                Picker("Waveform style", selection: $settings.waveformStyleId) {
+                    ForEach(WaveformStyle.allCases, id: \.rawValue) { style in
+                        Text(style.displayName).tag(style.rawValue)
+                    }
+                }
+            } header: {
+                Text("Display")
+            } footer: {
+                Text("How the live waveform is drawn while recording.")
+            }
+
+            Section {
                 Picker("Transcription language", selection: $settings.transcriptionLocaleId) {
                     Text("Auto (device language)").tag(AppSettings.autoLocaleId)
                     Text("简体中文").tag("zh-CN")

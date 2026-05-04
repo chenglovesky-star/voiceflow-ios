@@ -4,6 +4,7 @@ struct RecordingView: View {
     @ObservedObject var service: RecordingService
     var onStop: (RecordingSession) -> Void
     @State private var stopError: String?
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some View {
         VStack(spacing: 32) {
@@ -14,7 +15,7 @@ struct RecordingView: View {
                 .contentTransition(.numericText())
                 .accessibilityLabel("Elapsed \(Int(service.elapsed)) seconds")
 
-            WaveformView(levels: service.recentLevels)
+            WaveformView(levels: service.recentLevels, style: settings.waveformStyle)
                 .frame(height: 100)
                 .padding(.horizontal, 24)
 
