@@ -172,6 +172,13 @@ struct RecordingDetailView: View {
 
     private func delete() {
         try? FileManager.default.removeItem(at: entity.fileURL)
+        if let sid = entity.sessionId {
+            let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let sessionDir = docs
+                .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
+                .appendingPathComponent(sid.uuidString, isDirectory: true)
+            try? FileManager.default.removeItem(at: sessionDir)
+        }
         context.delete(entity)
         // 修复 2：CoreData save 错误不再静默丢弃，失败时写入 exportError 并展示
         do {
