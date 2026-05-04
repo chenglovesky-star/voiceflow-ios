@@ -1,6 +1,6 @@
 import Foundation
 import AVFoundation
-import Observation
+import Combine
 
 enum RecordingError: LocalizedError {
     case permissionDenied
@@ -26,12 +26,11 @@ enum RecordingError: LocalizedError {
 }
 
 @MainActor
-@Observable
-final class RecordingService: NSObject {
-    private(set) var isRecording: Bool = false
-    private(set) var currentLevel: Float = 0
-    private(set) var elapsed: TimeInterval = 0
-    private(set) var recentLevels: [Float] = []
+final class RecordingService: NSObject, ObservableObject {
+    @Published private(set) var isRecording: Bool = false
+    @Published private(set) var currentLevel: Float = 0
+    @Published private(set) var elapsed: TimeInterval = 0
+    @Published private(set) var recentLevels: [Float] = []
 
     private var recorder: AVAudioRecorder?
     private var meteringTimer: Timer?

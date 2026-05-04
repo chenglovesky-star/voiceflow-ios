@@ -1,9 +1,8 @@
 import Foundation
-import Observation
+import Combine
 
 @MainActor
-@Observable
-final class AppSettings {
+final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
     enum Keys {
@@ -13,18 +12,18 @@ final class AppSettings {
         static let onboardingComplete = "settings.onboardingComplete"
     }
 
-    @ObservationIgnored private let defaults: UserDefaults
+    private let defaults: UserDefaults
 
-    var defaultSampleRate: Int {
+    @Published var defaultSampleRate: Int {
         didSet { defaults.set(defaultSampleRate, forKey: Keys.sampleRate) }
     }
-    var defaultBitRate: Int {
+    @Published var defaultBitRate: Int {
         didSet { defaults.set(defaultBitRate, forKey: Keys.bitRate) }
     }
-    var iCloudEnabled: Bool {
+    @Published var iCloudEnabled: Bool {
         didSet { defaults.set(iCloudEnabled, forKey: Keys.iCloudEnabled) }
     }
-    var onboardingComplete: Bool {
+    @Published var onboardingComplete: Bool {
         didSet { defaults.set(onboardingComplete, forKey: Keys.onboardingComplete) }
     }
 
