@@ -2,8 +2,8 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    @State private var service = RecordingService()
-    @State private var settings = AppSettings.shared
+    @StateObject private var service = RecordingService()
+    @ObservedObject private var settings = AppSettings.shared
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
 
@@ -58,12 +58,19 @@ struct ContentView: View {
     @ViewBuilder
     private var recordingsList: some View {
         if entities.isEmpty {
-            ContentUnavailableView(
-                "No recordings",
-                systemImage: "waveform",
-                description: Text("Tap the mic to start your first recording.")
-            )
-            .frame(maxHeight: .infinity)
+            VStack(spacing: 16) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                Text("No recordings")
+                    .font(.headline)
+                Text("Tap the mic to start your first recording.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
                 ForEach(entities) { entity in

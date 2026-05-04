@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Bindable var settings: AppSettings
+    @ObservedObject var settings: AppSettings
 
     var body: some View {
         Form {
