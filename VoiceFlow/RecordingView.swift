@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RecordingView: View {
     @ObservedObject var service: RecordingService
-    var onStop: (Recording) -> Void
+    var onStop: (RecordingSession) -> Void
     @State private var stopError: String?
 
     var body: some View {

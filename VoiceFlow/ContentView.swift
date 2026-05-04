@@ -146,32 +146,35 @@ struct ContentView: View {
         }
     }
 
-    private func handleStop(_ recording: Recording) {
-        let entity = RecordingEntity.from(recording, context: context)
-        try? context.save()
-
-        transcribingIds.insert(recording.id)
+    private func handleStop(_ session: RecordingSession) {
         let svc = transcriptionService
         let ctx = context
-        let recordingId = recording.id
         let locale = settings.transcriptionLocale
 
-        Task {
-            do {
-                let transcript = try await svc.transcribe(
-                    audioURL: recording.url,
-                    recordingId: recordingId,
-                    locale: locale
-                )
-                if let target = entities.first(where: { $0.id == recordingId }) {
-                    let te = TranscriptEntity.from(transcript, context: ctx)
-                    target.transcript = te
-                    try? ctx.save()
+        for segment in session.segments {
+            let entity = RecordingEntity.from(segment, context: context)
+            try? context.save()
+
+            transcribingIds.insert(segment.id)
+            let recordingId = segment.id
+
+            Task {
+                do {
+                    let transcript = try await svc.transcribe(
+                        audioURL: segment.url,
+                        recordingId: recordingId,
+                        locale: locale
+                    )
+                    if let target = entities.first(where: { $0.id == recordingId }) {
+                        let te = TranscriptEntity.from(transcript, context: ctx)
+                        target.transcript = te
+                        try? ctx.save()
+                    }
+                } catch {
+                    // error surfaced in detail view
                 }
-            } catch {
-                // Phase 9 will surface in detail view; row falls back to no preview
+                transcribingIds.remove(recordingId)
             }
-            transcribingIds.remove(recordingId)
         }
     }
 
