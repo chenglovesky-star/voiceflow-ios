@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RecordingView: View {
-    @Bindable var service: RecordingService
+    @ObservedObject var service: RecordingService
     var onStop: (Recording) -> Void
     @State private var stopError: String?
 

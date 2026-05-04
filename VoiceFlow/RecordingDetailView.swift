@@ -1,11 +1,11 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct RecordingDetailView: View {
-    @Bindable var entity: RecordingEntity
+    var entity: RecordingEntity
     var isTranscribing: Bool
 
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.managedObjectContext) private var context
     @State private var shareItems: [Any] = []
     @State private var isShareSheetPresented = false
     @State private var exportError: String?
@@ -125,24 +125,40 @@ struct RecordingDetailView: View {
                     .textSelection(.enabled)
             }
         } else if entity.transcript != nil {
-            ContentUnavailableView(
-                "No speech detected",
-                systemImage: "waveform.slash",
-                description: Text("The recording did not contain recognizable speech.")
-            )
+            VStack(spacing: 16) {
+                Image(systemName: "waveform.slash")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                Text("No speech detected")
+                    .font(.headline)
+                Text("The recording did not contain recognizable speech.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ContentUnavailableView(
-                "Transcript pending",
-                systemImage: "text.bubble",
-                description: Text("Transcription will appear here when complete.")
-            )
+            VStack(spacing: 16) {
+                Image(systemName: "text.bubble")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                Text("Transcript pending")
+                    .font(.headline)
+                Text("Transcription will appear here when complete.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
     private func delete() {
         try? FileManager.default.removeItem(at: entity.fileURL)
-        modelContext.delete(entity)
-        try? modelContext.save()
+        context.delete(entity)
+        try? context.save()
     }
 
     private func export(format: ExportFormat) async {

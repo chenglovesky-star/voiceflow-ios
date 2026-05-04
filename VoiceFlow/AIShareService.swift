@@ -6,6 +6,9 @@ enum AITarget: String, CaseIterable, Sendable {
     case chatgpt
     case gemini
     case claude
+    case doubao
+    case kimi
+    case tongyi
 
     var displayName: String {
         switch self {
@@ -13,6 +16,9 @@ enum AITarget: String, CaseIterable, Sendable {
         case .chatgpt:    return "ChatGPT"
         case .gemini:     return "Gemini"
         case .claude:     return "Claude"
+        case .doubao:     return "豆包"
+        case .kimi:       return "Kimi"
+        case .tongyi:     return "通义"
         }
     }
 
@@ -25,6 +31,9 @@ enum AITarget: String, CaseIterable, Sendable {
         case .chatgpt:    return URL(string: "chatgpt://")!
         case .gemini:     return URL(string: "googlegemini://")!
         case .claude:     return URL(string: "claude://")!
+        case .doubao:     return URL(string: "bytedance.doubao://")!
+        case .kimi:       return URL(string: "kimichat://")!
+        case .tongyi:     return URL(string: "tongyi://")!
         }
     }
 
@@ -35,6 +44,9 @@ enum AITarget: String, CaseIterable, Sendable {
         case .chatgpt:    return URL(string: "https://chat.openai.com/")!
         case .gemini:     return URL(string: "https://gemini.google.com/app")!
         case .claude:     return URL(string: "https://claude.ai/")!
+        case .doubao:     return URL(string: "https://www.doubao.com/")!
+        case .kimi:       return URL(string: "https://kimi.moonshot.cn/")!
+        case .tongyi:     return URL(string: "https://tongyi.aliyun.com/")!
         }
     }
 }

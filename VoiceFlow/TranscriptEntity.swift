@@ -1,26 +1,13 @@
 import Foundation
-import SwiftData
+import CoreData
 
-@Model
-final class TranscriptEntity {
-    @Attribute(.unique) var id: UUID
-    var locale: String
-    var createdAt: Date
-    var segmentsData: Data
-
-    var recording: RecordingEntity?
-
-    init(
-        id: UUID = UUID(),
-        locale: String,
-        createdAt: Date = Date(),
-        segments: [TranscriptSegment]
-    ) {
-        self.id = id
-        self.locale = locale
-        self.createdAt = createdAt
-        self.segmentsData = (try? JSONEncoder().encode(segments)) ?? Data()
-    }
+@objc(TranscriptEntity)
+final class TranscriptEntity: NSManagedObject {
+    @NSManaged var id: UUID
+    @NSManaged var locale: String
+    @NSManaged var createdAt: Date
+    @NSManaged var segmentsData: Data
+    @NSManaged var recording: RecordingEntity?
 
     var segments: [TranscriptSegment] {
         get {
@@ -35,12 +22,29 @@ final class TranscriptEntity {
         segments.map(\.text).joined(separator: " ")
     }
 
-    static func from(_ transcript: Transcript) -> TranscriptEntity {
-        TranscriptEntity(
-            id: transcript.id,
-            locale: transcript.locale,
-            createdAt: transcript.createdAt,
-            segments: transcript.segments
-        )
+    convenience init(
+        context: NSManagedObjectContext,
+        id: UUID = UUID(),
+        locale: String,
+        createdAt: Date = Date(),
+        segments: [TranscriptSegment]
+    ) {
+        self.init(context: context)
+        self.id = id
+        self.locale = locale
+        self.createdAt = createdAt
+        self.segmentsData = (try? JSONEncoder().encode(segments)) ?? Data()
+    }
+
+    @discardableResult
+    static func from(_ transcript: Transcript, context: NSManagedObjectContext) -> TranscriptEntity {
+        let entity = TranscriptEntity(context: context)
+        entity.id = transcript.id
+        entity.locale = transcript.locale
+        entity.createdAt = transcript.createdAt
+        entity.segmentsData = (try? JSONEncoder().encode(transcript.segments)) ?? Data()
+        return entity
     }
 }
+
+extension TranscriptEntity: Identifiable {}

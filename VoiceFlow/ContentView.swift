@@ -1,15 +1,19 @@
 import SwiftUI
-import SwiftData
+import CoreData
 
 struct ContentView: View {
-    @State private var service = RecordingService()
-    @State private var settings = AppSettings.shared
+    @StateObject private var service = RecordingService()
+    @ObservedObject private var settings = AppSettings.shared
     @State private var transcribingIds: Set<UUID> = []
     @State private var startError: String?
 
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \RecordingEntity.createdAt, order: .reverse)
-    private var entities: [RecordingEntity]
+    @Environment(\.managedObjectContext) private var context
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \RecordingEntity.createdAt, ascending: false)],
+        animation: .default
+    )
+    private var entities: FetchedResults<RecordingEntity>
 
     private let transcriptionService: any TranscriptionService = TranscriptionServiceFactory.make()
 
@@ -54,12 +58,19 @@ struct ContentView: View {
     @ViewBuilder
     private var recordingsList: some View {
         if entities.isEmpty {
-            ContentUnavailableView(
-                "No recordings",
-                systemImage: "waveform",
-                description: Text("Tap the mic to start your first recording.")
-            )
-            .frame(maxHeight: .infinity)
+            VStack(spacing: 16) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.secondary)
+                Text("No recordings")
+                    .font(.headline)
+                Text("Tap the mic to start your first recording.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
                 ForEach(entities) { entity in
@@ -136,25 +147,24 @@ struct ContentView: View {
     }
 
     private func handleStop(_ recording: Recording) {
-        let entity = RecordingEntity.from(recording)
-        modelContext.insert(entity)
-        do { try modelContext.save() } catch { }
+        let entity = RecordingEntity.from(recording, context: context)
+        try? context.save()
 
         transcribingIds.insert(recording.id)
         let svc = transcriptionService
-        let ctx = modelContext
+        let ctx = context
         let recordingId = recording.id
+        let locale = settings.transcriptionLocale
 
         Task {
             do {
                 let transcript = try await svc.transcribe(
                     audioURL: recording.url,
                     recordingId: recordingId,
-                    locale: .current
+                    locale: locale
                 )
                 if let target = entities.first(where: { $0.id == recordingId }) {
-                    let te = TranscriptEntity.from(transcript)
-                    ctx.insert(te)
+                    let te = TranscriptEntity.from(transcript, context: ctx)
                     target.transcript = te
                     try? ctx.save()
                 }
@@ -169,9 +179,9 @@ struct ContentView: View {
         for i in offsets {
             let entity = entities[i]
             try? FileManager.default.removeItem(at: entity.fileURL)
-            modelContext.delete(entity)
+            context.delete(entity)
         }
-        try? modelContext.save()
+        try? context.save()
     }
 
     private func formatDuration(_ t: TimeInterval) -> String {
@@ -183,6 +193,11 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: [RecordingEntity.self, TranscriptEntity.self], inMemory: true)
+    let container = NSPersistentContainer(name: "VoiceFlow")
+    let description = NSPersistentStoreDescription()
+    description.type = NSInMemoryStoreType
+    container.persistentStoreDescriptions = [description]
+    container.loadPersistentStores { _, _ in }
+    return ContentView()
+        .environment(\.managedObjectContext, container.viewContext)
 }

@@ -1,12 +1,12 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 @MainActor
-@Observable
-final class AudioPlayerController: NSObject {
-    private(set) var isPlaying = false
-    private(set) var currentTime: TimeInterval = 0
-    private(set) var duration: TimeInterval = 0
+final class AudioPlayerController: NSObject, ObservableObject {
+    @Published private(set) var isPlaying = false
+    @Published private(set) var currentTime: TimeInterval = 0
+    @Published private(set) var duration: TimeInterval = 0
 
     private var player: AVAudioPlayer?
     private var ticker: Timer?
@@ -84,7 +84,7 @@ extension AudioPlayerController: AVAudioPlayerDelegate {
 struct AudioPlayerView: View {
     let url: URL
     var onSeekRequest: ((TimeInterval) -> Void)?
-    @State private var controller = AudioPlayerController()
+    @StateObject private var controller = AudioPlayerController()
 
     var body: some View {
         VStack(spacing: 12) {
