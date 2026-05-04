@@ -169,19 +169,24 @@ struct ContentView: View {
         let ctx = context
         let locale = settings.transcriptionLocale
 
+        // 阶段 1：批量插入所有实体（不在循环内 save）
         for segment in session.segments {
             let _ = RecordingEntity.from(segment, context: context)
-            // 修复 2：CoreData save 错误不再静默丢弃，失败时写入 startError
-            do {
-                try context.save()
-            } catch {
-                startError = error.localizedDescription
-            }
+        }
 
+        // 阶段 2：一次性原子保存，失败时不启动转录
+        do {
+            try context.save()
+        } catch {
+            startError = error.localizedDescription
+            return
+        }
+
+        // 阶段 3：所有实体保存成功后，批量启动转录 Task
+        for segment in session.segments {
             transcribingIds.insert(segment.id)
             let recordingId = segment.id
 
-            // 修复 1：Task 标注 @MainActor，确保访问 @State / @FetchRequest 在主线程
             Task { @MainActor in
                 do {
                     let transcript = try await svc.transcribe(
@@ -192,9 +197,7 @@ struct ContentView: View {
                     if let target = entities.first(where: { $0.id == recordingId }) {
                         let te = TranscriptEntity.from(transcript, context: ctx)
                         target.transcript = te
-                        // 修复 3：设置反向关系
                         te.recording = target
-                        // 修复 2：CoreData save 错误不再静默丢弃
                         do {
                             try ctx.save()
                         } catch {
@@ -202,7 +205,6 @@ struct ContentView: View {
                         }
                     }
                 } catch {
-                    // 修复 1：已在 @MainActor 上，无需 await MainActor.run
                     transcriptionErrors[recordingId] = error.localizedDescription
                 }
                 transcribingIds.remove(recordingId)
