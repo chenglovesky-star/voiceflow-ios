@@ -143,13 +143,7 @@ struct ContentView: View {
                 Text(formatDuration(entity.duration))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if transcribingIds.contains(entity.id) {
-                    HStack(spacing: 4) {
-                        ProgressView().scaleEffect(0.7)
-                        Text("Transcribing…").font(.caption)
-                    }
-                    .foregroundStyle(.secondary)
-                }
+                statusBadge(for: entity)
             }
             if let t = entity.transcript, !t.fullText.isEmpty {
                 Text(t.fullText)
@@ -159,6 +153,36 @@ struct ContentView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// row 二级状态徽章。覆盖转录中 / 失败 / 无语音三档，让用户在列表上
+    /// 一眼分辨各录音的转录状态——之前失败/无语音的录音跟 pending 完全
+    /// 同形，必须点进详情才能发现，体验断层。点 row 仍走详情页，详情页
+    /// 提供 Retry 按钮承接交互（避免 List row 内 Button 和 NavigationLink
+    /// 的事件冲突）。
+    @ViewBuilder
+    private func statusBadge(for entity: RecordingEntity) -> some View {
+        if transcribingIds.contains(entity.id) {
+            HStack(spacing: 4) {
+                ProgressView().scaleEffect(0.7)
+                Text("Transcribing…").font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        } else if transcriptionErrors[entity.id] != nil {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                Text("Transcription failed · tap to retry").font(.caption)
+            }
+            .foregroundColor(.orange)
+        } else if let t = entity.transcript, t.segments.isEmpty {
+            HStack(spacing: 4) {
+                Image(systemName: "waveform.slash")
+                Text("No speech detected").font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        }
+        // 成功 / pending 状态不显示徽章；成功的转录文本由下方 lineLimit(2) 块承接，
+        // pending 是新录音的瞬时窗口，不需要额外指示。
     }
 
     private var startButton: some View {

@@ -1,14 +1,14 @@
 {
   "sourceLanguage" : "en",
-  "version" : "1.0",
   "strings" : {
-    "%@" : {
-      "comment" : "Generic %@ pass-through used by Text(error.localizedDescription)",
-      "shouldTranslate" : false
-    },
     "16 kHz (smaller files)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "16 kHz（文件更小）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16 kHz（文件更小）"
+          }
+        }
       }
     },
     "32 kbps" : {
@@ -16,453 +16,986 @@
     },
     "44.1 kHz (default)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "44.1 kHz（默认）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "44.1 kHz（默认）"
+          }
+        }
       }
     },
     "48 kHz (high quality)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "48 kHz（高质量）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "48 kHz（高质量）"
+          }
+        }
       }
     },
     "64 kbps (default)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "64 kbps（默认）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "64 kbps（默认）"
+          }
+        }
       }
     },
     "128 kbps (high quality)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "128 kbps（高质量）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "128 kbps（高质量）"
+          }
+        }
       }
     },
     "About" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关于" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于"
+          }
+        }
       }
     },
     "Already recording." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已经在录音。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已经在录音。"
+          }
+        }
       }
     },
     "App language" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "应用语言" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用语言"
+          }
+        }
       }
     },
     "Audio and transcripts never leave your device." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "音频和转录文本从不离开你的设备。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频和转录文本从不离开你的设备。"
+          }
+        }
       }
     },
     "Audio export failed: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "音频导出失败：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频导出失败：%@"
+          }
+        }
       }
     },
     "Audio is clipping — move further from the mic." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "声音过载，请远离麦克风。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声音过载，请远离麦克风。"
+          }
+        }
       }
     },
     "Audio level too high" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "声音过大" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "声音过大"
+          }
+        }
       }
     },
     "Audio session failed: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "音频会话失败：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频会话失败：%@"
+          }
+        }
       }
     },
     "Auto (device language)" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "自动（设备语言）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（设备语言）"
+          }
+        }
       }
     },
     "Auto (system language)" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "自动（系统语言）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动（系统语言）"
+          }
+        }
       }
     },
     "Background noise is high — transcription may be inaccurate." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "背景噪声过大，转录可能不准。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景噪声过大，转录可能不准。"
+          }
+        }
       }
     },
     "Bars" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "条形图" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "条形图"
+          }
+        }
       }
     },
     "Build" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Build" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Build"
+          }
+        }
       }
     },
     "Cancel" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "取消" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
       }
     },
     "Cannot start" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法开始" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法开始"
+          }
+        }
       }
     },
     "Checking environment…" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "正在检测环境…" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检测环境…"
+          }
+        }
       }
     },
     "Choose how the waveform looks and what language the app UI uses." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择实时波形的样式以及应用界面使用的语言。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择实时波形的样式以及应用界面使用的语言。"
+          }
+        }
       }
     },
     "CloudKit container provisioning is required to actually sync. See README — sync is wired in Phase 10 of the roadmap." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "实际同步需要先配置 CloudKit 容器。详见 README——同步将在路线图的 Phase 10 接入。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实际同步需要先配置 CloudKit 容器。详见 README——同步将在路线图的 Phase 10 接入。"
+          }
+        }
       }
     },
     "Contact" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "联系" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系"
+          }
+        }
       }
     },
     "Couldn't install the on-device transcription model: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法安装本地转录模型：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法安装本地转录模型：%@"
+          }
+        }
       }
     },
     "Couldn't read the audio file: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法读取音频文件：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取音频文件：%@"
+          }
+        }
       }
     },
     "Couldn't write export: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "无法写入导出文件：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法写入导出文件：%@"
+          }
+        }
       }
     },
     "Delete" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
+          }
+        }
       }
     },
     "Delete failed" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "删除失败" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除失败"
+          }
+        }
       }
+    },
+    "Deutsch" : {
+
     },
     "Display" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "显示" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示"
+          }
+        }
       }
     },
     "ECG" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "心电图" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "心电图"
+          }
+        }
       }
+    },
+    "English (UK)" : {
+
+    },
+    "English (US)" : {
+
     },
     "Environment check failed" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "环境检测失败" } }
-      }
-    },
-    "Environment is OK" : {
-      "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "环境正常" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "环境检测失败"
+          }
+        }
       }
     },
     "Environment is noisy" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "环境较吵" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "环境较吵"
+          }
+        }
+      }
+    },
+    "Environment is OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "环境正常"
+          }
+        }
       }
     },
     "Environment is quiet" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "环境很安静" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "环境很安静"
+          }
+        }
       }
     },
     "Error stopping" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "停止失败" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止失败"
+          }
+        }
       }
     },
+    "Español" : {
+
+    },
     "Export" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "导出" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出"
+          }
+        }
       }
     },
     "Export failed" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "导出失败" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出失败"
+          }
+        }
       }
     },
+    "Français" : {
+
+    },
     "Heart" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "心跳" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "心跳"
+          }
+        }
       }
     },
     "House" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "房子" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "房子"
+          }
+        }
       }
     },
     "How the live waveform is drawn while recording." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "录音时实时波形的绘制方式。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音时实时波形的绘制方式。"
+          }
+        }
       }
     },
-    "iCloud" : {
-      "shouldTranslate" : false
-    },
     "Microphone access denied. Enable it in Settings → VoiceFlow." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "麦克风权限被拒绝。请在「设置 → VoiceFlow」中开启。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "麦克风权限被拒绝。请在「设置 → VoiceFlow」中开启。"
+          }
+        }
       }
     },
     "Move further from the mic and retry" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请远离麦克风后再试" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请远离麦克风后再试"
+          }
+        }
       }
     },
     "Move to a quieter place; otherwise transcription may be inaccurate" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "建议换个安静的地方，否则转录可能不准" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建议换个安静的地方，否则转录可能不准"
+          }
+        }
       }
     },
     "MP3 encoding is not available on this device." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "此设备不支持 MP3 编码。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此设备不支持 MP3 编码。"
+          }
+        }
       }
     },
     "New recordings use these settings. Existing recordings keep their original encoding." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "新录音将使用这些设置。已有录音保持其原始编码不变。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新录音将使用这些设置。已有录音保持其原始编码不变。"
+          }
+        }
       }
     },
     "No recordings" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无录音"
+          }
+        }
       }
     },
     "No speech detected" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未检测到语音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检测到语音"
+          }
+        }
       }
     },
     "No speech detected. Try speaking closer to the mic in a quieter place, or check the transcription language in Settings." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未检测到语音。请靠近麦克风、换个安静的地方再试，或在设置里检查转录语言。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检测到语音。请靠近麦克风、换个安静的地方再试，或在设置里检查转录语言。"
+          }
+        }
       }
     },
     "No transcript yet to send." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂无可发送的转录内容。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无可发送的转录内容。"
+          }
+        }
       }
     },
     "Not currently recording." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "当前未在录音。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前未在录音。"
+          }
+        }
       }
     },
     "OK" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "好" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        }
       }
     },
     "On-device speech model is unavailable for this language. iOS may still be downloading it; please retry in a moment." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "当前语言的本地语音模型尚不可用。iOS 可能仍在下载，请稍候重试。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前语言的本地语音模型尚不可用。iOS 可能仍在下载，请稍候重试。"
+          }
+        }
       }
     },
     "Pick the language you actually speak in recordings. iOS may need to download an on-device model for the chosen language the first time." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请选择你录音时真实使用的语言。iOS 首次使用所选语言时可能需要下载本地模型。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择你录音时真实使用的语言。iOS 首次使用所选语言时可能需要下载本地模型。"
+          }
+        }
       }
     },
     "Please stay quiet for ~1.5s" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请保持安静约 1.5 秒" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请保持安静约 1.5 秒"
+          }
+        }
       }
     },
     "Privacy" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "隐私" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私"
+          }
+        }
       }
     },
     "Ready to record" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "可以开始录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以开始录音"
+          }
+        }
       }
     },
     "Recheck" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新检测" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新检测"
+          }
+        }
       }
     },
     "Record anyway" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "仍要录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍要录音"
+          }
+        }
       }
     },
     "Recorder failed to start: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "录音器启动失败：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音器启动失败：%@"
+          }
+        }
       }
     },
     "Recording" : {
       "comment" : "Settings section header for recording-quality controls",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音"
+          }
+        }
       }
     },
     "Recording interrupted" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "录音中断" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音中断"
+          }
+        }
       }
     },
     "Retry transcription" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新转录" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新转录"
+          }
+        }
       }
     },
     "Sample rate" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "采样率" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "采样率"
+          }
+        }
       }
     },
     "Send to AI" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "发送到 AI" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送到 AI"
+          }
+        }
       }
     },
     "Settings" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置"
+          }
+        }
       }
     },
     "Share to other AI…" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "分享给其他 AI…" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享给其他 AI…"
+          }
+        }
       }
     },
     "Source file not found." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "找不到源文件。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到源文件。"
+          }
+        }
       }
     },
     "Speak louder or move closer to the mic." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请提高音量或靠近麦克风。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请提高音量或靠近麦克风。"
+          }
+        }
       }
     },
     "Speech recognition permission denied. Enable it in Settings → VoiceFlow." : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "语音识别权限被拒绝。请在「设置 → VoiceFlow」中开启。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音识别权限被拒绝。请在「设置 → VoiceFlow」中开启。"
+          }
+        }
       }
     },
     "Start recording" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "开始录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始录音"
+          }
+        }
       }
     },
     "Start recording (%@s)" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "开始录音（%@s）" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始录音（%@s）"
+          }
+        }
       }
     },
     "Stop recording" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "停止录音" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止录音"
+          }
+        }
       }
     },
     "Support" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "支持" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持"
+          }
+        }
       }
     },
     "Sync across my devices" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "在我的设备间同步" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在我的设备间同步"
+          }
+        }
       }
     },
     "Tap the mic to start your first recording." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "点击麦克风按钮开始第一次录音。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击麦克风按钮开始第一次录音。"
+          }
+        }
       }
     },
     "The recording did not contain recognizable speech." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本次录音中没有可识别的语音内容。" } }
-      }
-    },
-    "Transcribing…" : {
-      "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录中…" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本次录音中没有可识别的语音内容。"
+          }
+        }
       }
     },
     "Transcribing on-device…" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "本地转录中…" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地转录中…"
+          }
+        }
+      }
+    },
+    "Transcribing…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录中…"
+          }
+        }
       }
     },
     "Transcript pending" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "等待转录" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待转录"
+          }
+        }
       }
     },
     "Transcription" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录"
+          }
+        }
       }
     },
     "Transcription engine failed: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录引擎失败：%@" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录引擎失败：%@"
+          }
+        }
+      }
+    },
+    "Transcription failed · tap to retry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录失败 · 点击重试"
+          }
+        }
       }
     },
     "Transcription failed" : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录失败" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录失败"
+          }
+        }
       }
     },
     "Transcription language" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录语言" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录语言"
+          }
+        }
       }
     },
     "Transcription will appear here when complete." : {
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "转录完成后会显示在这里。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录完成后会显示在这里。"
+          }
+        }
       }
     },
     "Version" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "版本" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本"
+          }
+        }
       }
-    },
-    "VoiceFlow" : {
-      "comment" : "Brand name; do not translate",
-      "shouldTranslate" : false
     },
     "VoiceFlow records audio so it can transcribe what you said. Audio never leaves your device." : {
       "comment" : "NSMicrophoneUsageDescription — Info.plist permission prompt",
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "VoiceFlow 录制音频以便转录你说的话。音频从不离开你的设备。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceFlow 录制音频以便转录你说的话。音频从不离开你的设备。"
+          }
+        }
       }
     },
     "VoiceFlow transcribes your recordings on-device using Apple's speech recognition. Nothing is uploaded." : {
       "comment" : "NSSpeechRecognitionUsageDescription — Info.plist permission prompt",
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "VoiceFlow 使用 Apple 的语音识别在本地转录你的录音，不会上传任何内容。" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceFlow 使用 Apple 的语音识别在本地转录你的录音，不会上传任何内容。"
+          }
+        }
       }
     },
     "Waveform style" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "波形样式" } }
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "波形样式"
+          }
+        }
       }
+    },
+    "한국어" : {
+
+    },
+    "日本語" : {
+
+    },
+    "简体中文" : {
+
+    },
+    "繁體中文" : {
+
     }
-  }
+  },
+  "version" : "1.0"
 }
