@@ -45,8 +45,8 @@ struct RecordingView: View {
         } message: {
             Text(stopError ?? "")
         }
-        .alert("录音中断", isPresented: interruptedErrorBinding) {
-            Button("确定") { service.interruptedError = nil }
+        .alert("Recording interrupted", isPresented: interruptedErrorBinding) {
+            Button("OK") { service.interruptedError = nil }
         } message: {
             Text(service.interruptedError ?? "")
         }

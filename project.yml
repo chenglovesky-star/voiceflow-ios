@@ -7,6 +7,18 @@ options:
   xcodeVersion: "26.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
+  # i18n: 8 languages defined in Localizable.xcstrings;
+  # SwiftUI auto-falls-back to development language (en) for locales
+  # not listed here when running on devices set to those languages.
+  knownRegions:
+    - en
+    - zh-Hans
+    - zh-Hant
+    - ja
+    - ko
+    - fr
+    - de
+    - es
 
 settings:
   base:
@@ -44,6 +56,15 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        CFBundleLocalizations:
+          - en
+          - zh-Hans
+          - zh-Hant
+          - ja
+          - ko
+          - fr
+          - de
+          - es
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"

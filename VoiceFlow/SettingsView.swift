@@ -29,10 +29,19 @@ struct SettingsView: View {
                         Text(style.displayName).tag(style.rawValue)
                     }
                 }
+                // App display language picker — independent of system language.
+                // Native names (English / 简体中文 / ...) are intentionally NOT
+                // localized so users can find their language regardless of the
+                // current UI locale.
+                Picker("App language", selection: $settings.appLocaleId) {
+                    ForEach(AppSettings.appLocaleOptions, id: \.id) { option in
+                        Text(option.displayName).tag(option.id)
+                    }
+                }
             } header: {
                 Text("Display")
             } footer: {
-                Text("How the live waveform is drawn while recording.")
+                Text("Choose how the waveform looks and what language the app UI uses.")
             }
 
             Section {

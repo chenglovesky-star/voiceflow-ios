@@ -12,9 +12,24 @@ final class AppSettings: ObservableObject {
         static let onboardingComplete = "settings.onboardingComplete"
         static let transcriptionLocaleId = "settings.transcriptionLocaleId"
         static let waveformStyleId = "settings.waveformStyleId"
+        static let appLocaleId = "settings.appLocaleId"
     }
 
     static let autoLocaleId = "auto"
+
+    /// app 显示语言可选项（独立于 transcription locale）。
+    /// "auto" 表示跟随系统语言；其他值是 BCP-47 标识符，对应 String Catalog 里的 locale 条目。
+    static let appLocaleOptions: [(id: String, displayName: String)] = [
+        (autoLocaleId, "Auto (system language)"),
+        ("en",         "English"),
+        ("zh-Hans",    "简体中文"),
+        ("zh-Hant",    "繁體中文"),
+        ("ja",         "日本語"),
+        ("ko",         "한국어"),
+        ("fr",         "Français"),
+        ("de",         "Deutsch"),
+        ("es",         "Español"),
+    ]
 
     private let defaults: UserDefaults
 
@@ -36,6 +51,9 @@ final class AppSettings: ObservableObject {
     @Published var waveformStyleId: String {
         didSet { defaults.set(waveformStyleId, forKey: Keys.waveformStyleId) }
     }
+    @Published var appLocaleId: String {
+        didSet { defaults.set(appLocaleId, forKey: Keys.appLocaleId) }
+    }
 
     var transcriptionLocale: Locale {
         if transcriptionLocaleId == Self.autoLocaleId { return .current }
@@ -47,6 +65,13 @@ final class AppSettings: ObservableObject {
         WaveformStyle(rawValue: waveformStyleId) ?? .ecg
     }
 
+    /// 注入到 SwiftUI `\.locale` environment 的最终生效 Locale。
+    /// "auto" 返回 nil 让 SwiftUI 用系统默认；其他返回对应 BCP-47 Locale。
+    var effectiveLocale: Locale? {
+        if appLocaleId == Self.autoLocaleId { return nil }
+        return Locale(identifier: appLocaleId)
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.defaultSampleRate = (defaults.object(forKey: Keys.sampleRate) as? Int) ?? 44_100
@@ -55,5 +80,6 @@ final class AppSettings: ObservableObject {
         self.onboardingComplete = defaults.bool(forKey: Keys.onboardingComplete)
         self.transcriptionLocaleId = defaults.string(forKey: Keys.transcriptionLocaleId) ?? Self.autoLocaleId
         self.waveformStyleId = defaults.string(forKey: Keys.waveformStyleId) ?? WaveformStyle.ecg.rawValue
+        self.appLocaleId = defaults.string(forKey: Keys.appLocaleId) ?? Self.autoLocaleId
     }
 }

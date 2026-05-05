@@ -3,7 +3,7 @@ import AVFoundation
 
 enum ExportFormat: String, CaseIterable, Sendable {
     case m4a = "M4A"
-    case mp3 = "MP3"
+    case aac = "AAC"
     case txt = "TXT"
     case srt = "SRT"
     case markdown = "Markdown"
@@ -11,7 +11,7 @@ enum ExportFormat: String, CaseIterable, Sendable {
     var fileExtension: String {
         switch self {
         case .m4a: return "m4a"
-        case .mp3: return "mp3"
+        case .aac: return "m4a"   // AAC in M4A container
         case .txt: return "txt"
         case .srt: return "srt"
         case .markdown: return "md"
@@ -21,14 +21,14 @@ enum ExportFormat: String, CaseIterable, Sendable {
     var systemImage: String {
         switch self {
         case .m4a: return "waveform"
-        case .mp3: return "music.note"
+        case .aac: return "music.note"
         case .txt: return "doc.text"
         case .srt: return "captions.bubble"
         case .markdown: return "doc.richtext"
         }
     }
 
-    var isAudio: Bool { self == .m4a || self == .mp3 }
+    var isAudio: Bool { self == .m4a || self == .aac }
 }
 
 enum ExportError: LocalizedError {
@@ -40,13 +40,13 @@ enum ExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .sourceMissing:
-            return "Source file not found."
+            return String(localized: "Source file not found.")
         case .writeFailed(let e):
-            return "Couldn't write export: \(e.localizedDescription)"
+            return String(localized: "Couldn't write export: \(e.localizedDescription)")
         case .mp3EncodingUnavailable:
-            return "MP3 encoding is not available on this device."
+            return String(localized: "MP3 encoding is not available on this device.")
         case .audioExportFailed(let s):
-            return "Audio export failed: \(s)"
+            return String(localized: "Audio export failed: \(s)")
         }
     }
 }
@@ -66,7 +66,7 @@ struct ExportService: Sendable {
         switch format {
         case .m4a:
             return try copyAudio(ctx: ctx, asExt: "m4a")
-        case .mp3:
+        case .aac:
             return try await convertToMP3(ctx: ctx)
         case .txt:
             return try writeText(

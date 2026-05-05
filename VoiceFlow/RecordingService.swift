@@ -13,15 +13,15 @@ enum RecordingError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Microphone access denied. Enable it in Settings → VoiceFlow."
+            return String(localized: "Microphone access denied. Enable it in Settings → VoiceFlow.")
         case .sessionConfigurationFailed(let e):
-            return "Audio session failed: \(e.localizedDescription)"
+            return String(localized: "Audio session failed: \(e.localizedDescription)")
         case .recorderInitFailed(let e):
-            return "Recorder failed to start: \(e.localizedDescription)"
+            return String(localized: "Recorder failed to start: \(e.localizedDescription)")
         case .alreadyRecording:
-            return "Already recording."
+            return String(localized: "Already recording.")
         case .notRecording:
-            return "Not currently recording."
+            return String(localized: "Not currently recording.")
         }
     }
 }
@@ -56,19 +56,19 @@ struct EnvironmentProbe: Equatable {
 
     var headline: String {
         switch quality {
-        case .quiet:      return "环境很安静"
-        case .acceptable: return "环境正常"
-        case .noisy:      return "环境较吵"
-        case .clipping:   return "声音过大"
+        case .quiet:      return String(localized: "Environment is quiet")
+        case .acceptable: return String(localized: "Environment is OK")
+        case .noisy:      return String(localized: "Environment is noisy")
+        case .clipping:   return String(localized: "Audio level too high")
         }
     }
 
     var detail: String {
         switch quality {
-        case .quiet:      return "可以开始录音"
-        case .acceptable: return "可以开始录音"
-        case .noisy:      return "建议换个安静的地方，否则转录可能不准"
-        case .clipping:   return "请远离麦克风后再试"
+        case .quiet:      return String(localized: "Ready to record")
+        case .acceptable: return String(localized: "Ready to record")
+        case .noisy:      return String(localized: "Move to a quieter place; otherwise transcription may be inaccurate")
+        case .clipping:   return String(localized: "Move further from the mic and retry")
         }
     }
 
@@ -94,11 +94,11 @@ enum NoiseWarning: Equatable {
     var message: String {
         switch self {
         case .noisyEnvironment:
-            return "Background noise is high — transcription may be inaccurate."
+            return String(localized: "Background noise is high — transcription may be inaccurate.")
         case .tooQuiet:
-            return "Speak louder or move closer to the mic."
+            return String(localized: "Speak louder or move closer to the mic.")
         case .clipping:
-            return "Audio is clipping — move further from the mic."
+            return String(localized: "Audio is clipping — move further from the mic.")
         }
     }
 

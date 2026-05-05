@@ -27,7 +27,7 @@ struct EnvironmentProbeView: View {
             Spacer()
             content
             Spacer()
-            Button("取消", action: cancelAndClose)
+            Button("Cancel", action: cancelAndClose)
                 .buttonStyle(.bordered)
                 .padding(.bottom, 32)
         }
@@ -51,7 +51,7 @@ struct EnvironmentProbeView: View {
                 startProbe()
             }
         }
-        .alert("环境检测失败", isPresented: errorBinding) {
+        .alert("Environment check failed", isPresented: errorBinding) {
             Button("OK") { cancelAndClose() }
         } message: {
             Text(error ?? "")
@@ -78,9 +78,9 @@ struct EnvironmentProbeView: View {
                         pulseScale = 1.15
                     }
                 }
-            Text("正在检测环境…")
+            Text("Checking environment…")
                 .font(.headline)
-            Text("请保持安静约 1.5 秒")
+            Text("Please stay quiet for ~1.5s")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             levelBar
@@ -143,7 +143,7 @@ struct EnvironmentProbeView: View {
                 Button {
                     startProbe()
                 } label: {
-                    Label("重新检测", systemImage: "arrow.clockwise")
+                    Label("Recheck", systemImage: "arrow.clockwise")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
@@ -154,7 +154,7 @@ struct EnvironmentProbeView: View {
                     staleDeadline = nil
                     onProceed(probe)
                 } label: {
-                    Text("仍要录音")
+                    Text("Record anyway")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
                 }
@@ -165,9 +165,12 @@ struct EnvironmentProbeView: View {
     }
 
     private var autoProceedLabel: String {
-        guard let deadline = autoProceedDeadline else { return "开始录音" }
+        guard let deadline = autoProceedDeadline else {
+            return String(localized: "Start recording")
+        }
         let remaining = max(0, deadline.timeIntervalSince(now))
-        return String(format: "开始录音（%.1fs）", remaining)
+        let remainingFmt = String(format: "%.1f", remaining)
+        return String(localized: "Start recording (\(remainingFmt)s)")
     }
 
     private func metric(label: String, value: String) -> some View {

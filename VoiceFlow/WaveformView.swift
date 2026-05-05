@@ -13,10 +13,10 @@ enum WaveformStyle: String, CaseIterable, Sendable {
 
     var displayName: String {
         switch self {
-        case .bars:  return "条形图"
-        case .ecg:   return "心电图"
-        case .heart: return "心跳"
-        case .house: return "房子"
+        case .bars:  return String(localized: "Bars")
+        case .ecg:   return String(localized: "ECG")
+        case .heart: return String(localized: "Heart")
+        case .house: return String(localized: "House")
         }
     }
 }

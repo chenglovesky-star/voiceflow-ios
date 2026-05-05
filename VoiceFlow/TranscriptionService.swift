@@ -18,17 +18,17 @@ enum TranscriptionError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "On-device speech model is unavailable for this language. iOS may still be downloading it; please retry in a moment."
+            return String(localized: "On-device speech model is unavailable for this language. iOS may still be downloading it; please retry in a moment.")
         case .authorizationDenied:
-            return "Speech recognition permission denied. Enable it in Settings → VoiceFlow."
+            return String(localized: "Speech recognition permission denied. Enable it in Settings → VoiceFlow.")
         case .modelInstallFailed(let e):
-            return "Couldn't install the on-device transcription model: \(e.localizedDescription)"
+            return String(localized: "Couldn't install the on-device transcription model: \(e.localizedDescription)")
         case .audioReadFailed(let e):
-            return "Couldn't read the audio file: \(e.localizedDescription)"
+            return String(localized: "Couldn't read the audio file: \(e.localizedDescription)")
         case .engineFailed(let e):
-            return "Transcription engine failed: \(e.localizedDescription)"
+            return String(localized: "Transcription engine failed: \(e.localizedDescription)")
         case .noSpeechDetected:
-            return "No speech detected. Try speaking closer to the mic in a quieter place, or check the transcription language in Settings."
+            return String(localized: "No speech detected. Try speaking closer to the mic in a quieter place, or check the transcription language in Settings.")
         }
     }
 }

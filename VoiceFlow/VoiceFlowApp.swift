@@ -4,6 +4,8 @@ import Speech
 
 @main
 struct VoiceFlowApp: App {
+    @ObservedObject private var settings = AppSettings.shared
+
     let persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "VoiceFlow")
         container.loadPersistentStores { storeDescription, error in
@@ -32,6 +34,8 @@ struct VoiceFlowApp: App {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistentContainer.viewContext)
+                // 用户在 Settings 选定的 app 显示语言（auto = nil → 跟随系统）
+                .environment(\.locale, settings.effectiveLocale ?? Locale.autoupdatingCurrent)
                 .task {
                     // 启动时静默预热 SFSpeechRecognizer：触发模型激活/下载，
                     // 避免用户首次录完点详情时还卡在「unavailable」。仅初始化、不识别。

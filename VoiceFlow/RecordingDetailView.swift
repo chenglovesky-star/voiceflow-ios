@@ -77,7 +77,7 @@ struct RecordingDetailView: View {
             }
             Divider()
             ShareLink(item: text) {
-                Label("分享给其他 AI…", systemImage: "square.and.arrow.up")
+                Label("Share to other AI…", systemImage: "square.and.arrow.up")
             }
         } label: {
             HStack(spacing: 8) {
