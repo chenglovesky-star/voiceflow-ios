@@ -44,14 +44,6 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
-        LSApplicationQueriesSchemes:
-          - perplexity
-          - chatgpt
-          - googlegemini
-          - claude
-          - bytedance.doubao
-          - kimichat
-          - tongyi
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"

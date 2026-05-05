@@ -1,6 +1,12 @@
 import Foundation
 import UIKit
 
+/// 详情页"Send to AI"子菜单展示的 AI 品牌列表。
+/// 仅保留 displayName 用于 UI；不再依赖 URL scheme 直送 deep link
+/// （字节系不公开自家 scheme，猜测的 `bytedance.doubao://` 在真机上会
+/// LSApplicationNotFoundErr，回退 webURL 又走 Safari），改由系统 Share Sheet
+/// 接管：用户点品牌入口 → 弹 Share Sheet → 目标 app 的 Share Extension 把
+/// 文本直送对话框，无需粘贴。
 enum AITarget: String, CaseIterable, Sendable {
     case perplexity
     case chatgpt
@@ -23,71 +29,17 @@ enum AITarget: String, CaseIterable, Sendable {
     }
 
     var systemImage: String { "sparkles" }
-
-    /// URL scheme registered in LSApplicationQueriesSchemes; used to detect install.
-    var detectionURL: URL {
-        switch self {
-        case .perplexity: return URL(string: "perplexity://")!
-        case .chatgpt:    return URL(string: "chatgpt://")!
-        case .gemini:     return URL(string: "googlegemini://")!
-        case .claude:     return URL(string: "claude://")!
-        case .doubao:     return URL(string: "bytedance.doubao://")!
-        case .kimi:       return URL(string: "kimichat://")!
-        case .tongyi:     return URL(string: "tongyi://")!
-        }
-    }
-
-    /// Web/Universal fallback when App is not installed.
-    var webURL: URL {
-        switch self {
-        case .perplexity: return URL(string: "https://www.perplexity.ai/")!
-        case .chatgpt:    return URL(string: "https://chat.openai.com/")!
-        case .gemini:     return URL(string: "https://gemini.google.com/app")!
-        case .claude:     return URL(string: "https://claude.ai/")!
-        case .doubao:     return URL(string: "https://www.doubao.com/")!
-        case .kimi:       return URL(string: "https://kimi.moonshot.cn/")!
-        case .tongyi:     return URL(string: "https://tongyi.aliyun.com/")!
-        }
-    }
-}
-
-struct AIShareResult: Sendable {
-    let target: AITarget
-    let installed: Bool
-    let opened: Bool
 }
 
 @MainActor
 struct AIShareService {
 
-    func isInstalled(_ target: AITarget) -> Bool {
-        UIApplication.shared.canOpenURL(target.detectionURL)
-    }
-
-    /// Copies the transcript to the system clipboard and opens the target App.
-    ///
-    /// 不再用 `canOpenURL` 当 gate —— 它对未注册到 LSApplicationQueriesSchemes
-    /// 的 scheme、或名字稍有出入的 scheme 都会假阴性返回 false，导致即使设备
-    /// 装了目标 app 也被错误地导向网页。改成直接 `open(detectionURL)` 试一下
-    /// deep link，失败再回退到 `webURL`。
-    ///
-    /// 三档行为：
-    /// 1. 装了 app + scheme 对 → 直接进 app
-    /// 2. 装了 app + scheme 错（如 `bytedance.doubao://` 不是豆包真实 scheme）
-    ///    → deep link `open` 返回 false → 回退 `webURL`；目标 app 通过
-    ///    Apple Universal Links 接管 https 域名，仍然进 app
-    /// 3. 没装 app → 两次都失败 → 系统走 Safari
-    @discardableResult
-    func send(_ text: String, to target: AITarget) async -> AIShareResult {
+    /// 把转录文本复制到剪贴板（兜底：用户在 Share Sheet 取消时仍能去任意 app 粘贴），
+    /// 并返回准备好的 share payload。调用方负责用 ShareSheet 呈现该 payload —
+    /// 系统会列出所有支持文本分享的 app（豆包/ChatGPT/Claude/Kimi/微信/备忘录...），
+    /// 用户选定后文本直送目标 app 输入框。
+    func prepare(_ text: String) -> [Any] {
         UIPasteboard.general.string = text
-
-        // 1. 直接尝试 deep link（不依赖 canOpenURL）
-        if await UIApplication.shared.open(target.detectionURL) {
-            return AIShareResult(target: target, installed: true, opened: true)
-        }
-
-        // 2. Deep link 失败 → 走 https；iOS 自动判断走 Universal Link 还是 Safari
-        let opened = await UIApplication.shared.open(target.webURL)
-        return AIShareResult(target: target, installed: false, opened: opened)
+        return [text]
     }
 }
