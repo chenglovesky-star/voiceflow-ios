@@ -61,18 +61,23 @@ struct RecordingDetailView: View {
         return false
     }
 
-    /// 子菜单仅作为视觉品牌入口（豆包/Claude/Kimi 等图标），点击任一项都触发
-    /// 系统 Share Sheet —— 因为各家 AI app 的 URL scheme 都不公开/不稳定，
-    /// 而 Share Extension 是稳妥可工作的路径（豆包/ChatGPT/Claude 都实现了）。
-    /// 用户在 Share Sheet 里再选一次目标 app，文本直送对话框。
+    /// Send to AI 入口分两档：
+    /// - 海外 4 家（Perplexity / ChatGPT / Gemini / Claude）走 deep link 一键直送 app
+    /// - 国产 AI（豆包/Kimi/通义/DeepSeek/...）走系统 Share Sheet（ShareLink）
+    ///   让用户在 sheet 里选实际目标，文本经 Share Extension 直送对话框
     private var sendToAICTA: some View {
-        Menu {
+        let text = transcriptText
+        return Menu {
             ForEach(AITarget.allCases, id: \.self) { target in
                 Button {
-                    shareTranscript()
+                    Task { await sendToAI(target) }
                 } label: {
                     Label(target.displayName, systemImage: target.systemImage)
                 }
+            }
+            Divider()
+            ShareLink(item: text) {
+                Label("分享给其他 AI…", systemImage: "square.and.arrow.up")
             }
         } label: {
             HStack(spacing: 8) {
@@ -89,6 +94,11 @@ struct RecordingDetailView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .padding()
         }
+    }
+
+    /// 当前 transcript 拼接后的完整文本；空字符串表示无内容。
+    private var transcriptText: String {
+        (entity.transcript?.segments ?? []).map(\.text).joined(separator: " ")
     }
 
     @ViewBuilder
@@ -240,18 +250,14 @@ struct RecordingDetailView: View {
         )
     }
 
-    /// 弹系统 Share Sheet 让用户选目标 app（豆包/ChatGPT/Claude/Kimi/微信...）。
-    /// 文本通过 NSItemProvider 走系统级共享，目标 app 的 Share Extension 把
-    /// 内容直接放进对话框/输入框，**无需粘贴**；同时把文本写入剪贴板兜底
-    /// （用户取消 ShareSheet 后可手动粘贴）。
-    private func shareTranscript() {
-        let segments = entity.transcript?.segments ?? []
-        guard !segments.isEmpty else {
+    /// 海外 4 家：先尝试 deep link 直送 app，失败回退 https
+    /// （AIShareService.send 内部已有逻辑，调用方只需处理空 transcript）。
+    private func sendToAI(_ target: AITarget) async {
+        let text = transcriptText
+        guard !text.isEmpty else {
             exportError = "No transcript yet to send."
             return
         }
-        let text = segments.map(\.text).joined(separator: " ")
-        shareItems = aiShareService.prepare(text)
-        isShareSheetPresented = true
+        _ = await aiShareService.send(text, to: target)
     }
 }
