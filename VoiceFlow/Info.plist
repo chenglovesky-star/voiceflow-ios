@@ -37,6 +37,8 @@
 	<string>VoiceFlow records audio so it can transcribe what you said. Audio never leaves your device.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>VoiceFlow transcribes your recordings on-device using Apple's speech recognition. Nothing is uploaded.</string>
+	<key>SupportEmail</key>
+	<string>chenglovesky@icloud.com</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -85,7 +85,14 @@ struct SettingsView: View {
             Section("About") {
                 LabeledContent("Version", value: appVersion)
                 LabeledContent("Build", value: buildNumber)
-                Link("Support", destination: URL(string: "mailto:tsing@alumni.upenn.edu")!)
+                // Contact 行：邮箱地址直接当作可点击 Link 显示在 trailing 位置，
+                // 比单独的 "Support" 链接更明确——用户一眼能看到联系邮箱本身。
+                if let supportEmail = Bundle.main.object(forInfoDictionaryKey: "SupportEmail") as? String,
+                   let supportURL = URL(string: "mailto:\(supportEmail)") {
+                    LabeledContent("Contact") {
+                        Link(supportEmail, destination: supportURL)
+                    }
+                }
             }
 
         }

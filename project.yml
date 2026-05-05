@@ -65,6 +65,7 @@ targets:
           - fr
           - de
           - es
+        SupportEmail: chenglovesky@icloud.com
     settings:
       base:
         TARGETED_DEVICE_FAMILY: "1,2"
