@@ -52,7 +52,9 @@ final class AudioPlayerController: NSObject, ObservableObject {
         player?.pause()
         isPlaying = false
         ticker?.invalidate()
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        Task.detached(priority: .background) {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 
     func seek(to time: TimeInterval) {
@@ -63,13 +65,17 @@ final class AudioPlayerController: NSObject, ObservableObject {
 
     func stop() {
         player?.stop()
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         player = nil
         ticker?.invalidate()
         ticker = nil
         isPlaying = false
         currentTime = 0
         duration = 0
+        // setActive 走后台，避免在主线程同步等待 mediaserverd XPC 响应导致 UI 卡死。
+        // （真机上 SFSpeechRecognizer 运行时 mediaserverd 忙，同步调用可阻塞数秒）
+        Task.detached(priority: .background) {
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 }
 

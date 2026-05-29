@@ -61,10 +61,8 @@ struct RecordingDetailView: View {
         return false
     }
 
-    /// Send to AI 入口分两档：
-    /// - 海外 4 家（Perplexity / ChatGPT / Gemini / Claude）走 deep link 一键直送 app
-    /// - 国产 AI（豆包/Kimi/通义/DeepSeek/...）走系统 Share Sheet（ShareLink）
-    ///   让用户在 sheet 里选实际目标，文本经 Share Extension 直送对话框
+    /// Send to AI 入口：国产 AI（豆包/Kimi/通义/DeepSeek）走 deep link 直送，
+    /// 其余 app 走系统 Share Sheet（ShareLink）。
     private var sendToAICTA: some View {
         let text = transcriptText
         return Menu {

@@ -53,15 +53,15 @@ struct RecordingServiceURLTests {
 
     @Test("makeRecordingURL produces .m4a in recordings dir")
     func makeRecordingURLPath() {
-        let url = RecordingService.makeRecordingURL()
+        let url = RecordingService.makeRecordingURL(sessionId: nil, segment: 0)
         #expect(url.pathExtension == "m4a")
         #expect(url.path.contains("/\(RecordingService.recordingsDirectoryName)/"))
     }
 
     @Test("two URLs are unique")
     func makeRecordingURLUnique() {
-        let a = RecordingService.makeRecordingURL()
-        let b = RecordingService.makeRecordingURL()
+        let a = RecordingService.makeRecordingURL(sessionId: nil, segment: 0)
+        let b = RecordingService.makeRecordingURL(sessionId: nil, segment: 0)
         #expect(a != b)
     }
 }

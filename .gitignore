@@ -46,3 +46,14 @@ fastlane/test_output
 
 # Git worktrees
 .worktrees/
+.gitnexus/
+
+# AI / CLI tool configs (local only)
+.agents/
+.blitz/
+.claude/
+.codex/
+.mcp.json
+opencode.json
+.planning/
+.seed/

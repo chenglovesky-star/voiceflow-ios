@@ -54,11 +54,12 @@ struct ExportServiceTextTests {
     @Test("ExportFormat exposes filename extension and isAudio flag")
     func formatTraits() {
         #expect(ExportFormat.m4a.fileExtension == "m4a")
-        #expect(ExportFormat.mp3.fileExtension == "mp3")
+        #expect(ExportFormat.aac.fileExtension == "m4a")   // AAC in M4A container
         #expect(ExportFormat.txt.fileExtension == "txt")
         #expect(ExportFormat.srt.fileExtension == "srt")
         #expect(ExportFormat.markdown.fileExtension == "md")
         #expect(ExportFormat.m4a.isAudio == true)
+        #expect(ExportFormat.aac.isAudio == true)
         #expect(ExportFormat.txt.isAudio == false)
     }
 }

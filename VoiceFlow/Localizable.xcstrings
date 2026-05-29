@@ -237,6 +237,9 @@
         }
       }
     },
+    "Choose your AI app — it opens automatically" : {
+
+    },
     "CloudKit container provisioning is required to actually sync. See README — sync is wired in Phase 10 of the roadmap." : {
       "localizations" : {
         "zh-Hans" : {
@@ -423,7 +426,13 @@
         }
       }
     },
+    "For Doubao, DeepSeek, Qwen, and Kimi — the transcript is copied to your clipboard. Just paste after the app opens." : {
+
+    },
     "Français" : {
+
+    },
+    "Get Started" : {
 
     },
     "Heart" : {
@@ -513,6 +522,9 @@
         }
       }
     },
+    "Next" : {
+
+    },
     "No recordings" : {
       "localizations" : {
         "zh-Hans" : {
@@ -587,6 +599,9 @@
           }
         }
       }
+    },
+    "Paste the text into the chat" : {
+
     },
     "Pick the language you actually speak in recordings. iOS may need to download an on-device model for the chosen language the first time." : {
       "localizations" : {
@@ -738,6 +753,16 @@
         }
       }
     },
+    "Share your transcript directly to Doubao, DeepSeek, Tongyi Qianwen, Kimi, and more." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写完成，一键发送至豆包、DeepSeek、通义千问、Kimi 等国产 AI 助手。"
+          }
+        }
+      }
+    },
     "Source file not found." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -826,6 +851,9 @@
         }
       }
     },
+    "Tap **Send to AI** on any recording" : {
+
+    },
     "Tap the mic to start your first recording." : {
       "localizations" : {
         "zh-Hans" : {
@@ -835,6 +863,9 @@
           }
         }
       }
+    },
+    "Tap the microphone to start your first recording." : {
+
     },
     "The recording did not contain recognizable speech." : {
       "localizations" : {
@@ -897,22 +928,22 @@
         }
       }
     },
-    "Transcription failed · tap to retry" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "转录失败 · 点击重试"
-          }
-        }
-      }
-    },
     "Transcription failed" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "转录失败"
+          }
+        }
+      }
+    },
+    "Transcription failed · tap to retry" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转录失败 · 点击重试"
           }
         }
       }
@@ -927,6 +958,9 @@
           }
         }
       }
+    },
+    "Transcription runs entirely on-device using Apple's speech recognition. No cloud upload, no data collection." : {
+
     },
     "Transcription will appear here when complete." : {
       "localizations" : {
@@ -983,6 +1017,15 @@
           }
         }
       }
+    },
+    "Welcome to VoiceFlow" : {
+
+    },
+    "You're All Set" : {
+
+    },
+    "Your Privacy Matters" : {
+
     },
     "한국어" : {
 

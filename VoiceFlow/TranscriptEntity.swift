@@ -11,10 +11,20 @@ final class TranscriptEntity: NSManagedObject {
 
     var segments: [TranscriptSegment] {
         get {
-            (try? JSONDecoder().decode([TranscriptSegment].self, from: segmentsData)) ?? []
+            do {
+                return try JSONDecoder().decode([TranscriptSegment].self, from: segmentsData)
+            } catch {
+                assertionFailure("TranscriptEntity: segment decode failed — \(error)")
+                return []
+            }
         }
         set {
-            segmentsData = (try? JSONEncoder().encode(newValue)) ?? Data()
+            do {
+                segmentsData = try JSONEncoder().encode(newValue)
+            } catch {
+                assertionFailure("TranscriptEntity: segment encode failed — \(error)")
+                segmentsData = Data()
+            }
         }
     }
 
@@ -33,7 +43,12 @@ final class TranscriptEntity: NSManagedObject {
         self.id = id
         self.locale = locale
         self.createdAt = createdAt
-        self.segmentsData = (try? JSONEncoder().encode(segments)) ?? Data()
+        do {
+            self.segmentsData = try JSONEncoder().encode(segments)
+        } catch {
+            assertionFailure("TranscriptEntity: init encode failed")
+            self.segmentsData = Data()
+        }
     }
 
     @discardableResult
@@ -42,7 +57,12 @@ final class TranscriptEntity: NSManagedObject {
         entity.id = transcript.id
         entity.locale = transcript.locale
         entity.createdAt = transcript.createdAt
-        entity.segmentsData = (try? JSONEncoder().encode(transcript.segments)) ?? Data()
+        do {
+            entity.segmentsData = try JSONEncoder().encode(transcript.segments)
+        } catch {
+            assertionFailure("TranscriptEntity: from encode failed")
+            entity.segmentsData = Data()
+        }
         return entity
     }
 }

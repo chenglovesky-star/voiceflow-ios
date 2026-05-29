@@ -15,6 +15,12 @@ final class RecordingEntity: NSManagedObject {
 
     var fileURL: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        if let sid = sessionId {
+            return docs
+                .appendingPathComponent(RecordingService.sessionsDirectoryName, isDirectory: true)
+                .appendingPathComponent(sid.uuidString, isDirectory: true)
+                .appendingPathComponent(fileName)
+        }
         return docs
             .appendingPathComponent(RecordingService.recordingsDirectoryName, isDirectory: true)
             .appendingPathComponent(fileName)
@@ -50,9 +56,9 @@ final class RecordingEntity: NSManagedObject {
         entity.duration = recording.duration
         entity.createdAt = recording.createdAt
         entity.displayName = recording.displayName
-        entity.sessionId = nil
-        entity.segmentIndex = 0
-        entity.totalSegments = 1
+        entity.sessionId = recording.sessionId
+        entity.segmentIndex = Int32(recording.segmentIndex)
+        entity.totalSegments = Int32(recording.totalSegments)
         return entity
     }
 }

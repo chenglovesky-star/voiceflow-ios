@@ -1,27 +1,26 @@
 import Foundation
 import UIKit
 
-/// 详情页"Send to AI"子菜单展示的海外 AI 品牌入口。
+/// 详情页"发送到 AI"子菜单展示的国产 AI 品牌入口。
 ///
-/// **只保留 URL scheme 公开真实可用的 4 家**——这些 deep link 能一键
-/// 直送 app（用户最佳体验）。国产 AI（豆包/Kimi/通义/DeepSeek/文心/元宝/星火/智谱…）
-/// 一律不公开自家 scheme，硬猜命中率极低且会随版本失效，故合并到一个
-/// `ShareLink("分享给其他 AI…")` 入口由系统 Share Sheet 接管：
-///   - 列出所有装了 Share Extension 的 AI app
-///   - 用户选择后文本直送目标 app 输入框（不再走 Safari 网页）
-///   - 自动支持新出现的 AI app（无需我们更新代码）
+/// 国产 AI 的 iOS 客户端绝大多数没有注册 Share Extension，因此不会出现在系统
+/// Share Sheet 里——只能在 app 内主动给入口，否则用户压根看不见。
+///
+/// iOS 14+ `UIApplication.open` 不需要在 Info.plist 的
+/// `LSApplicationQueriesSchemes` 里声明 scheme 即可拉起目标 app；scheme
+/// 失败则回退 https，由系统 Universal Link 决定进 app 还是 Safari。
 enum AITarget: String, CaseIterable, Sendable {
-    case perplexity
-    case chatgpt
-    case gemini
-    case claude
+    case doubao
+    case deepseek
+    case qwen
+    case kimi
 
     var displayName: String {
         switch self {
-        case .perplexity: return "Perplexity"
-        case .chatgpt:    return "ChatGPT"
-        case .gemini:     return "Gemini"
-        case .claude:     return "Claude"
+        case .doubao:   return "豆包"
+        case .deepseek: return "DeepSeek"
+        case .qwen:     return "通义千问"
+        case .kimi:     return "Kimi"
         }
     }
 
@@ -30,10 +29,10 @@ enum AITarget: String, CaseIterable, Sendable {
     /// 官方公开/已验证的 URL scheme。
     var detectionURL: URL {
         switch self {
-        case .perplexity: return URL(string: "perplexity://")!
-        case .chatgpt:    return URL(string: "chatgpt://")!
-        case .gemini:     return URL(string: "googlegemini://")!
-        case .claude:     return URL(string: "claude://")!
+        case .doubao:   return URL(string: "doubao://")!
+        case .deepseek: return URL(string: "deepseek://")!
+        case .qwen:     return URL(string: "tongyi://")!
+        case .kimi:     return URL(string: "kimi://")!
         }
     }
 
@@ -41,10 +40,10 @@ enum AITarget: String, CaseIterable, Sendable {
     /// 路由进 app（如果 app 在 AASA 里声明了该域名）；否则进 Safari。
     var webURL: URL {
         switch self {
-        case .perplexity: return URL(string: "https://www.perplexity.ai/")!
-        case .chatgpt:    return URL(string: "https://chat.openai.com/")!
-        case .gemini:     return URL(string: "https://gemini.google.com/app")!
-        case .claude:     return URL(string: "https://claude.ai/")!
+        case .doubao:   return URL(string: "https://www.doubao.com/chat/")!
+        case .deepseek: return URL(string: "https://chat.deepseek.com/")!
+        case .qwen:     return URL(string: "https://tongyi.aliyun.com/qianwen/")!
+        case .kimi:     return URL(string: "https://kimi.moonshot.cn/")!
         }
     }
 }

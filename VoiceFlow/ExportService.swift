@@ -108,7 +108,7 @@ struct ExportService: Sendable {
     private func convertToMP3(ctx: ExportContext) async throws -> URL {
         // iOS 17+ ships with AAC/Apple Lossless encoders but no built-in MP3.
         // We export via AVAssetExportPresetAppleM4A (AAC in M4A container) which
-        // is accepted by Perplexity/Gemini/OpenAI/Whisper API. Avoids LAME licensing.
+        // is widely accepted by AI tools. Avoids LAME licensing.
         // Phase 5.1 (later): real MP3 via AudioToolbox if user demand justifies.
         guard FileManager.default.fileExists(atPath: ctx.sourceURL.path) else {
             throw ExportError.sourceMissing
