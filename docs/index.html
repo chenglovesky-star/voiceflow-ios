@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceFlow — 录音·转录·送给 AI，本地完成</title>
+<style>
+:root{
+  --bg:#0a0c10; --bg2:#0f1218; --card:#141820; --card2:#1a2030;
+  --line:#1e2535; --line2:#28334a;
+  --tx:#d5dbe8; --tx2:#8a97ae; --tx3:#5a6478;
+  --ac:#a78bfa; --ac2:#60d9c4; --ac3:#f59e42; --ac4:#f87171;
+  --mono:'SF Mono',ui-monospace,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,12,16,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:58px}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:grid;place-items:center;font-size:16px;flex:none}
+.nav-wordmark{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.nav-links{display:flex;gap:4px}
+.nav-links a{text-decoration:none;color:var(--tx2);font-size:14px;padding:6px 12px;border-radius:8px;transition:.15s}
+.nav-links a:hover{color:var(--tx);background:var(--card)}
+.nav-cta{background:var(--ac);color:#fff!important;font-weight:600}
+.nav-cta:hover{background:#8b5cf6!important}
+
+/* ── HERO ── */
+.hero{padding:120px 0 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(800px 500px at 50% -5%,rgba(124,58,237,.18),transparent),radial-gradient(600px 400px at 80% 80%,rgba(96,217,196,.08),transparent);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ac2);border:1px solid rgba(96,217,196,.3);padding:5px 14px;border-radius:99px;background:rgba(96,217,196,.07);margin-bottom:28px}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--ac2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(96,217,196,.5)}50%{opacity:.8;box-shadow:0 0 0 6px rgba(96,217,196,0)}}
+h1{font-size:clamp(36px,7vw,72px);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:20px}
+h1 .line1{display:block;background:linear-gradient(120deg,#fff 40%,var(--ac));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 .line2{display:block;color:var(--tx2);font-weight:700}
+.hero-sub{font-size:19px;color:var(--tx2);max-width:600px;margin:0 auto 36px;line-height:1.65}
+.hero-sub strong{color:var(--ac3)}
+.cta-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:13px 24px;border-radius:12px;font-size:15px;font-weight:600;transition:.18s;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;box-shadow:0 4px 24px rgba(124,58,237,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,.45)}
+.btn-ghost{background:var(--card);color:var(--tx);border:1px solid var(--line2)}
+.btn-ghost:hover{border-color:var(--ac);color:var(--ac)}
+.btn svg{width:18px;height:18px;flex:none;fill:currentColor}
+
+/* ── PAIN POINT ── */
+.pain{padding:72px 0;border-top:1px solid var(--line)}
+.pain-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac3);margin-bottom:16px}
+.pain h2{font-size:clamp(24px,4vw,36px);font-weight:750;margin-bottom:20px;letter-spacing:-.02em;color:#fff}
+.pain p{font-size:17px;color:var(--tx2);max-width:680px;line-height:1.8}
+.flow-row{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-top:32px}
+.flow-step{background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;font-size:14px;white-space:nowrap}
+.flow-step.old{color:var(--ac4);border-color:rgba(248,113,113,.25)}
+.flow-step.new{color:var(--ac2);border-color:rgba(96,217,196,.3);background:rgba(96,217,196,.07)}
+.flow-arrow{padding:0 10px;color:var(--tx3);font-size:18px}
+.flow-vs{padding:0 16px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+
+/* ── FEATURES ── */
+.features{padding:72px 0;border-top:1px solid var(--line)}
+.section-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ac);margin-bottom:16px}
+.section-title{font-size:clamp(22px,3.5vw,34px);font-weight:750;margin-bottom:48px;letter-spacing:-.02em;color:#fff}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.feat-card{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);padding:24px;transition:.2s}
+.feat-card:hover{border-color:var(--line2);background:var(--card2);transform:translateY(-3px)}
+.feat-icon{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:22px;margin-bottom:16px;flex:none}
+.feat-card h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:-.01em}
+.feat-card p{font-size:14px;color:var(--tx2);line-height:1.65}
+.feat-card code{font-family:var(--mono);font-size:12.5px;background:var(--bg2);color:var(--ac3);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+
+/* ── SCREENSHOTS ── */
+.screenshots{padding:72px 0;border-top:1px solid var(--line)}
+.phones{display:flex;gap:20px;overflow-x:auto;padding-bottom:16px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.phone-wrap{flex:none;scroll-snap-align:start;width:200px}
+.phone-frame{position:relative;border-radius:36px;overflow:hidden;border:2px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5);background:#000}
+.phone-frame img{width:100%;display:block}
+.phone-cap{margin-top:10px;font-size:12.5px;color:var(--tx3);text-align:center;font-family:var(--mono)}
+
+/* ── TECH STACK ── */
+.stack{padding:72px 0;border-top:1px solid var(--line)}
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stack-row{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.stack-label{font-size:12.5px;font-family:var(--mono);color:var(--tx3);margin-bottom:2px}
+.stack-val{font-size:14.5px;color:var(--tx);font-weight:600}
+.stack-badge{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid;margin-left:auto;flex:none}
+.badge-local{color:var(--ac2);border-color:rgba(96,217,196,.4);background:rgba(96,217,196,.08)}
+.badge-native{color:var(--ac);border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.08)}
+.badge-free{color:var(--ac3);border-color:rgba(245,158,66,.4);background:rgba(245,158,66,.08)}
+
+/* ── ENGINE ── */
+.engine{padding:72px 0;border-top:1px solid var(--line)}
+.engine-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:600px){.engine-cards{grid-template-columns:1fr}}
+.engine-card{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);padding:24px}
+.engine-card.primary{border-color:rgba(96,217,196,.3);background:linear-gradient(180deg,rgba(96,217,196,.06),var(--card))}
+.engine-card.fallback{border-color:rgba(167,139,250,.25)}
+.engine-tier{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.engine-card.primary .engine-tier{color:var(--ac2)}
+.engine-card.fallback .engine-tier{color:var(--ac)}
+.engine-card h3{font-size:18px;font-weight:750;color:#fff;margin-bottom:8px;letter-spacing:-.01em}
+.engine-card p{font-size:14px;color:var(--tx2);line-height:1.65}
+.engine-pros{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.engine-pros li{font-size:13.5px;color:var(--tx2);display:flex;align-items:baseline;gap:7px}
+.engine-pros li::before{content:"✓";color:var(--ac2);font-weight:700;font-size:12px;flex:none}
+
+/* ── PRIVACY ── */
+.privacy{padding:72px 0;border-top:1px solid var(--line)}
+.privacy-box{background:linear-gradient(180deg,rgba(96,217,196,.07),transparent);border:1px solid rgba(96,217,196,.25);border-radius:var(--r);padding:36px 40px;display:flex;gap:28px;align-items:flex-start}
+@media(max-width:600px){.privacy-box{flex-direction:column;padding:24px}}
+.privacy-icon{font-size:40px;flex:none;line-height:1}
+.privacy-box h2{font-size:22px;font-weight:750;color:#fff;margin-bottom:10px;letter-spacing:-.01em}
+.privacy-box p{font-size:15px;color:var(--tx2);line-height:1.75}
+.privacy-box strong{color:var(--ac2)}
+
+/* ── PRICING ── */
+.pricing{padding:72px 0;border-top:1px solid var(--line);text-align:center}
+.price-card{display:inline-flex;flex-direction:column;align-items:center;background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:40px 48px;max-width:380px;width:100%}
+.price-tag{font-size:52px;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1}
+.price-tag sup{font-size:24px;vertical-align:top;margin-top:10px;color:var(--tx2)}
+.price-tag del{font-size:28px;color:var(--tx3);font-weight:400;margin-left:10px}
+.price-label{font-size:14px;color:var(--ac2);margin-top:8px;font-weight:600}
+.price-perks{list-style:none;margin:24px 0;text-align:left;display:flex;flex-direction:column;gap:10px;width:100%}
+.price-perks li{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--tx)}
+.price-perks li::before{content:"✓";color:var(--ac2);font-weight:700;flex:none}
+.price-note{font-size:12.5px;color:var(--tx3);margin-top:4px}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--line);padding:36px 0;text-align:center}
+footer p{font-size:13.5px;color:var(--tx3)}
+footer a{color:var(--ac);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+/* ── RESPONSIVE ── */
+@media(max-width:700px){
+  .flow-row{gap:6px}
+  .pain .flow-vs{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-icon">🎙</div>
+      <span class="nav-wordmark">VoiceFlow</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">功能</a>
+      <a href="#screenshots">截图</a>
+      <a href="#stack">技术</a>
+      <a href="https://github.com/chenglovesky-star/voiceflow-ios" target="_blank" rel="noopener" class="nav-cta btn">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="badge"><span class="badge-dot"></span>iOS 17+ · Swift · 本地转录</div>
+    <h1>
+      <span class="line1">录音 · 转录 · 送给 AI</span>
+      <span class="line2">全部本地完成。</span>
+    </h1>
+    <p class="hero-sub">
+      你说话，VoiceFlow 转成文字，一键发给 Perplexity / ChatGPT / Gemini。<br>
+      <strong>不订阅，不上传，不限文件大小。</strong>
+    </p>
+    <div class="cta-row">
+      <a href="https://github.com/chenglovesky-star/voiceflow-ios" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        查看源码
+      </a>
+      <a href="#screenshots" class="btn btn-ghost">看截图</a>
+    </div>
+  </div>
+</section>
+
+<!-- PAIN POINT -->
+<section class="pain">
+  <div class="wrap">
+    <div class="pain-label">为什么做这个</div>
+    <h2>iOS 用户录完音，然后呢？</h2>
+    <p>现实：买录音 App → 转格式 → 压缩文件 → 上传 AI 工具 → 被拒"文件超 25 MB"。<br>
+    VoiceFlow 把这条断裂的链折叠成<strong style="color:#fff">一个屏幕、一次按钮</strong>。</p>
+    <div class="flow-row" style="margin-bottom:16px">
+      <span class="flow-step old">📱 录音 App</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step old">🗂 文件管理</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step old">🔄 格式转换</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-step old">🤖 AI 工具</span>
+    </div>
+    <div class="flow-vs">↓ VoiceFlow</div>
+    <div class="flow-row" style="margin-top:10px">
+      <span class="flow-step new">🎙 录音 + 转录 + 发给 AI — 一个 App</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="section-label">核心功能</div>
+    <div class="section-title">少即是多</div>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(167,139,250,.12)">🎙</div>
+        <h3>高质量录音</h3>
+        <p>默认 <code>M4A AAC 64kbps</code> 单声道，30 分钟会议仅约 15 MB——彻底解决 AI 上传 25 MB 限制的根因。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(96,217,196,.10)">🧠</div>
+        <h3>本地转录，零网络</h3>
+        <p>iOS 26+ 用 Apple <code>SpeechAnalyzer</code>，iOS 17-25 自动切 <code>WhisperKit</code>。音频从不离开设备。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(245,158,66,.10)">🚀</div>
+        <h3>一键发给 AI</h3>
+        <p>深链直跳 Perplexity、ChatGPT、Gemini、Claude，无缝粘贴转录文字稿。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(248,113,113,.10)">📤</div>
+        <h3>多格式导出</h3>
+        <p>支持导出 <code>M4A</code>、<code>MP3</code>、<code>TXT</code>、<code>SRT</code> 字幕文件，覆盖会议纪要、播客剪辑、字幕制作。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(96,217,196,.08)">☁️</div>
+        <h3>iCloud 跨设备同步</h3>
+        <p>Core Data + CloudKit，手机录的，iPad 接着看，无需登录账号，无后端。</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(167,139,250,.08)">🌍</div>
+        <h3>多语言界面</h3>
+        <p>界面支持中文 / 英文，转录语言可在设置页独立切换，国际用户友好。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section class="screenshots" id="screenshots">
+  <div class="wrap">
+    <div class="section-label">截图预览</div>
+    <div class="section-title" style="margin-bottom:32px">真机截图</div>
+    <div class="phones">
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <img src="https://raw.githubusercontent.com/chenglovesky-star/voiceflow-ios/main/settings-00-home.png" alt="主页" loading="lazy">
+        </div>
+        <div class="phone-cap">主页</div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <img src="https://raw.githubusercontent.com/chenglovesky-star/voiceflow-ios/main/settings-01-open.png" alt="设置" loading="lazy">
+        </div>
+        <div class="phone-cap">设置页</div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <img src="https://raw.githubusercontent.com/chenglovesky-star/voiceflow-ios/main/settings-02-transcription-section.png" alt="转录设置" loading="lazy">
+        </div>
+        <div class="phone-cap">转录引擎</div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <img src="https://raw.githubusercontent.com/chenglovesky-star/voiceflow-ios/main/settings-03-picker-open.png" alt="语言选择" loading="lazy">
+        </div>
+        <div class="phone-cap">语言选择</div>
+      </div>
+      <div class="phone-wrap">
+        <div class="phone-frame">
+          <img src="https://raw.githubusercontent.com/chenglovesky-star/voiceflow-ios/main/settings-04-zh-selected.png" alt="中文已选" loading="lazy">
+        </div>
+        <div class="phone-cap">中文模式</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSCRIPTION ENGINE -->
+<section class="engine" id="engine">
+  <div class="wrap">
+    <div class="section-label">转录引擎</div>
+    <div class="section-title">自动选最佳，无需手动切</div>
+    <div class="engine-cards">
+      <div class="engine-card primary">
+        <div class="engine-tier">主引擎 · iOS 26+</div>
+        <h3>Apple SpeechAnalyzer</h3>
+        <p>Apple 原生 API，系统级优化，长音频无压力，完全离线。</p>
+        <ul class="engine-pros">
+          <li>零运营成本，不调用 API</li>
+          <li>长音频（1 小时+）稳定</li>
+          <li>系统语言自动适配</li>
+          <li>隐私：音频留在设备</li>
+        </ul>
+      </div>
+      <div class="engine-card fallback">
+        <div class="engine-tier">备用引擎 · iOS 17-25</div>
+        <h3>WhisperKit</h3>
+        <p>OpenAI Whisper 模型的原生 Swift 实现，覆盖 iPhone XS (A12) 及以上老设备。</p>
+        <ul class="engine-pros">
+          <li>覆盖 ~95% 在用 iPhone</li>
+          <li>Core ML 加速，本地推理</li>
+          <li>多语言识别能力强</li>
+          <li>同样无需网络</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:13.5px;color:var(--tx3);font-family:var(--mono)">
+      → <code>TranscriptionServiceFactory.make()</code> 启动时自动检测系统版本并选择引擎
+    </p>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="stack" id="stack">
+  <div class="wrap">
+    <div class="section-label">技术栈</div>
+    <div class="section-title">选择最合适的，不堆栈</div>
+    <div class="stack-grid">
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">UI</div>
+          <div class="stack-val">SwiftUI</div>
+        </div>
+        <span class="stack-badge badge-native">Native</span>
+      </div>
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">录音</div>
+          <div class="stack-val">AVAudioRecorder</div>
+        </div>
+        <span class="stack-badge badge-native">Native</span>
+      </div>
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">主转录</div>
+          <div class="stack-val">SpeechAnalyzer</div>
+        </div>
+        <span class="stack-badge badge-local">Local</span>
+      </div>
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">备用转录</div>
+          <div class="stack-val">WhisperKit</div>
+        </div>
+        <span class="stack-badge badge-local">Local</span>
+      </div>
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">存储 / 同步</div>
+          <div class="stack-val">Core Data + CloudKit</div>
+        </div>
+        <span class="stack-badge badge-free">Free</span>
+      </div>
+      <div class="stack-row">
+        <div>
+          <div class="stack-label">最低系统</div>
+          <div class="stack-val">iOS 17 (iPhone XS+)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section class="privacy">
+  <div class="wrap">
+    <div class="privacy-box">
+      <div class="privacy-icon">🔒</div>
+      <div>
+        <h2>Data Not Collected</h2>
+        <p>
+          VoiceFlow <strong>不收集任何用户数据</strong>。你的录音和文字稿只存在你的设备和 iCloud 私人容器里——
+          没有我们的服务器，没有分析 SDK，没有广告追踪。
+          这不是营销语言，这是 App Store 隐私营养标签的字面声明。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing">
+  <div class="wrap">
+    <div class="section-label" style="text-align:center;margin-bottom:12px">定价</div>
+    <div class="section-title">一次买断，永久使用</div>
+    <div class="price-card">
+      <div class="price-tag"><sup>$</sup>2.99 <del>4.99</del></div>
+      <div class="price-label">首发优惠价 · 一次性买断</div>
+      <ul class="price-perks">
+        <li>无订阅，付一次永久用</li>
+        <li>全功能解锁，无内购陷阱</li>
+        <li>iCloud 同步包含在内</li>
+        <li>所有未来更新免费</li>
+      </ul>
+      <div class="price-note">美区 App Store 首发 · 后续恢复 $4.99</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <p>
+      <a href="https://github.com/chenglovesky-star/voiceflow-ios" target="_blank" rel="noopener">GitHub</a>
+      &nbsp;·&nbsp; iOS 17+ &nbsp;·&nbsp; Swift + SwiftUI &nbsp;·&nbsp; 2026
+    </p>
+    <p style="margin-top:6px">VoiceFlow — Record. Transcribe. Send to AI. Locally.</p>
+  </div>
+</footer>
+
+</body>
+</html>
